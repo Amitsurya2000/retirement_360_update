@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Step 1 — Personal
+  fullName        String?
+  age             Int
+  gender          String
+  maritalStatus   String
+  spouseAge       Int?
+  dependents      Int      @default(0)
+  cityTier        String   // "metro" | "tier2" | "tier3"
+
+  // Step 2 — Financial
+  corpus              Float   // total retirement corpus in INR (auto-computed sum of fundsBreakdown)
+  pensionMonthly      Float   @default(0)
+  rentalMonthly       Float   @default(0)
+  dividendMonthly     Float   @default(0)
+  // Engine-specific inputs (added for the 3-stage framework engine)
+  epsMonthly          Float   @default(0)  // EPS pension carved out separately (member only)
+  npsLumpSum          Float   @default(0)  // total NPS at retirement (kept for backward compat; same as fundsBreakdown.nps)
+  npsSubscriberSelf   Boolean @default(true) // NPS subscriber: true=self/primary, false=spouse
+  // Per-category fund split (JSON: { pf, gratuity, leaveEncashment, nps, govScheme, savings })
+  // Matches the FUNDS table in the R C Singh Excel template.
+  fundsBreakdown      String?
+  assetRealEstate     Float   @default(0)
+  assetGold           Float   @default(0)
+  assetEquity         Float   @default(0)
+  assetFD             Float   @default(0)
+  liabilityTotal      Float   @default(0)
+  emiMonthly          Float   @default(0)
+  hasHealthInsurance  Boolean @default(false)
+  healthCover         Float   @default(0)
+
+  // Step 3 — Income Need
+  desiredMonthlyIncome   Float
+  expenseHousing         Float   @default(0)
+  expenseFood            Float   @default(0)
+  expenseMedical         Float   @default(0)
+  expenseLifestyle       Float   @default(0)
+  expenseTravel          Float   @default(0)
+  expenseOther           Float   @default(0)
+  inflationRate          Float   @default(6)
+
+  // Step 4 — Risk & Goals
+  riskAppetite       String   // "conservative" | "moderate" | "balanced"
+  planningHorizon    Int      @default(25)
+  legacyAmount       Float    @default(0)
+  bucketListGoals    String?  // JSON
+
+  // Step 5 — Health & Lifestyle
+  healthConditions   String?  // JSON
+  hobbies            String?  // JSON
+  socialEngagement   Int      @default(5)
+  relationshipFocus  String?  // JSON
+
+  // Generated plan (cached)
+  generatedPlan      String?
+}
