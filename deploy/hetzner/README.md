@@ -2,21 +2,39 @@
 
 Two supported paths. Pick one.
 
-## Option A — Docker Compose on a single Hetzner VPS (simplest)
+## Option A — Docker Compose on a single Hetzner VPS (recommended, auto-HTTPS)
 
-1. Create a Hetzner Cloud server (CX22 / Ubuntu 24.04 is plenty to start). Note its IP.
-2. Add your SSH key, then bootstrap it:
+This uses `deploy/docker-compose.prod.yml` + **Caddy**, which fetches and renews a free
+Let's Encrypt TLS cert automatically — no manual certbot steps.
+
+**0. Buy the two things (one-time):**
+   - A **Hetzner Cloud** server: https://www.hetzner.com/cloud → Ubuntu 24.04, type **CX22**.
+     Add your SSH key during creation. Note the **IP**.
+   - A **domain** (Namecheap/Cloudflare/GoDaddy). Add a DNS **A record** pointing your
+     domain (e.g. `app.yourname.com`) at the server **IP**.
+
+**1. Bootstrap the server** (installs Docker, firewall, deploy user):
    ```bash
    ssh root@YOUR_HETZNER_IP 'bash -s' < deploy/hetzner/setup-server.sh
    ```
-3. On the server, create `backend/.env` (from `backend/.env.example`) with your real `GEMINI_API_KEY`.
-4. From your laptop, deploy:
+
+**2. Create `backend/.env` on the server** (from `backend/.env.example`) with at least:
+   ```ini
+   DOMAIN=app.yourname.com
+   CADDY_EMAIL=you@email.com
+   GEMINI_API_KEY=AIza...
+   POSTGRES_PASSWORD=a-strong-password
+   ```
+
+**3. Deploy from your laptop:**
    ```bash
    RETIRE360_SERVER=deploy@YOUR_HETZNER_IP ./deploy/hetzner/deploy.sh
    ```
-5. Add TLS: put **Caddy** or **Certbot+Nginx** in front, or point Cloudflare at the server.
 
-`ssh root@YOUR_HETZNER_IP` is your remote-management key — exactly the "SSH" box in the architecture diagram.
+**4. Wait ~1 min for DNS + cert**, then open **https://app.yourname.com** 🎉
+
+`ssh root@YOUR_HETZNER_IP` is your remote-management key — the "SSH" box in the diagram.
+Caddy is the "Nginx gateway" box; it also handles TLS.
 
 ## Option B — Kubernetes (Hetzner managed k8s or k3s on a VPS)
 

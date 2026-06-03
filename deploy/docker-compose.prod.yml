@@ -1,0 +1,65 @@
+# Retirement360 — PRODUCTION stack for Hetzner: Postgres + FastAPI + frontend + Caddy.
+# Caddy terminates TLS with an auto-provisioned Let's Encrypt cert for $DOMAIN.
+#
+# Requires backend/.env on the server with at least: DOMAIN, CADDY_EMAIL, GEMINI_API_KEY.
+# Started automatically by deploy/hetzner/deploy.sh.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: retire
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-retire}
+      POSTGRES_DB: retire360
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retire -d retire360"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://retire:${POSTGRES_PASSWORD:-retire}@db:5432/retire360
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      CORS_ORIGINS: https://${DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        VITE_API_BASE: /api
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

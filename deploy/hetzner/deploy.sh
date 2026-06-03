@@ -20,15 +20,18 @@ echo "==> Building & restarting the stack on the server"
 ssh "${SERVER}" bash -se <<'REMOTE'
 set -euo pipefail
 cd /opt/retire360
-# backend/.env must exist on the server with the real GEMINI_API_KEY.
+# backend/.env must exist on the server with DOMAIN, CADDY_EMAIL, GEMINI_API_KEY.
 if [ ! -f backend/.env ]; then
   echo "ERROR: backend/.env missing on server — create it from backend/.env.example" >&2
   exit 1
 fi
-export $(grep -v '^#' backend/.env | xargs)
-docker compose -f deploy/docker-compose.yml pull || true
-docker compose -f deploy/docker-compose.yml up -d --build
-docker compose -f deploy/docker-compose.yml ps
+set -a; . backend/.env; set +a   # export DOMAIN, CADDY_EMAIL, GEMINI_API_KEY, etc.
+if [ -z "${DOMAIN:-}" ]; then
+  echo "ERROR: DOMAIN not set in backend/.env (needed for the HTTPS cert)" >&2
+  exit 1
+fi
+docker compose -f deploy/docker-compose.prod.yml up -d --build
+docker compose -f deploy/docker-compose.prod.yml ps
 REMOTE
 
-echo "==> Deployed. Visit http://YOUR_HETZNER_IP (add TLS via Caddy/Certbot for production)."
+echo "==> Deployed. Once DNS points at the server, visit https://YOUR_DOMAIN (Caddy gets the cert automatically)."

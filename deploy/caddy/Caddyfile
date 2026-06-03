@@ -1,0 +1,25 @@
+# Caddy gateway with AUTOMATIC HTTPS (free Let's Encrypt cert for your domain).
+# {$DOMAIN} and {$CADDY_EMAIL} are read from the environment (set in backend/.env).
+#
+# Caddy fetches + renews the TLS cert on its own — no manual certbot steps.
+
+{
+	email {$CADDY_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	# API + docs → FastAPI backend. flush_interval -1 streams the AI chat token-by-token.
+	@api path /api* /docs /openapi.json
+	handle @api {
+		reverse_proxy backend:8000 {
+			flush_interval -1
+		}
+	}
+
+	# Everything else → the frontend SPA.
+	handle {
+		reverse_proxy frontend:80
+	}
+}
