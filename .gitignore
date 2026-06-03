@@ -37,3 +37,31 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# ─── Retirement360 platform (FastAPI/Docker/K8s monorepo) ───
+# Python backend
+backend/.venv/
+backend/__pycache__/
+backend/app/**/__pycache__/
+*.pyc
+*.db
+backend/.env
+
+# Frontend (Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Flutter (generated platform runners + build output)
+mobile/.dart_tool/
+mobile/build/
+mobile/android/
+mobile/ios/
+mobile/windows/
+mobile/macos/
+mobile/linux/
+mobile/web/
+mobile/.flutter-plugins*
+
+# Kubernetes secrets (filled-in copies)
+deploy/k8s/01-secrets.yaml
