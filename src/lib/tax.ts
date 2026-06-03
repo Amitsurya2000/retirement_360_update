@@ -22,7 +22,6 @@ export interface TaxInputs {
   otherAnnual: number;
   // Deductions (old regime only)
   section80C: number;             // PPF / ELSS / LIC up to ₹1.5L
-  section80D: number;             // health insurance — seniors up to ₹50k self + ₹50k parents
   section80DDB: number;           // medical treatment specified diseases — up to ₹1L (seniors)
   section80TTB: number;           // interest deduction for seniors — up to ₹50k
   standardDeduction: number;      // ₹50k for pensioners (treated as salary)
@@ -63,15 +62,16 @@ function oldRegimeTaxOnSlabs(taxable: number, bracket: AgeBracket): number {
   return tax;
 }
 
-// New regime slabs FY24-25.
+// New regime slabs FY25-26 (AY 2026-27).
 function newRegimeTaxOnSlabs(taxable: number): number {
-  // 0–3L: 0, 3–7L: 5%, 7–10L: 10%, 10–12L: 15%, 12–15L: 20%, >15L: 30%
+  // 0–4L: 0, 4–8L: 5%, 8–12L: 10%, 12–16L: 15%, 16–20L: 20%, 20–24L: 25%, >24L: 30%
   const bands: Array<[number, number]> = [
-    [3_00_000, 0],
-    [7_00_000, 0.05],
-    [10_00_000, 0.10],
-    [12_00_000, 0.15],
-    [15_00_000, 0.20],
+    [4_00_000, 0],
+    [8_00_000, 0.05],
+    [12_00_000, 0.10],
+    [16_00_000, 0.15],
+    [20_00_000, 0.20],
+    [24_00_000, 0.25],
     [Infinity, 0.30],
   ];
   let tax = 0;
@@ -87,9 +87,9 @@ function newRegimeTaxOnSlabs(taxable: number): number {
 
 function rebate87A(taxOnSlabs: number, totalIncome: number, regime: "old" | "new"): number {
   // Old regime: full rebate if total income <= ₹5L, capped at ₹12,500
-  // New regime: full rebate if total income <= ₹7L, capped at ₹25,000
+  // New regime (FY25-26): full rebate if total income <= ₹12L, capped at ₹60,000
   if (regime === "old" && totalIncome <= 5_00_000) return Math.min(taxOnSlabs, 12_500);
-  if (regime === "new" && totalIncome <= 7_00_000) return Math.min(taxOnSlabs, 25_000);
+  if (regime === "new" && totalIncome <= 12_00_000) return Math.min(taxOnSlabs, 60_000);
   return 0;
 }
 
@@ -111,7 +111,6 @@ export function calcTax(inputs: TaxInputs, regime: "old" | "new"): TaxBreakdown 
   if (regime === "old") {
     totalDeductions =
       Math.min(inputs.section80C, 1_50_000) +
-      Math.min(inputs.section80D, bracket !== "regular" ? 1_00_000 : 75_000) +
       Math.min(inputs.section80DDB, bracket !== "regular" ? 1_00_000 : 40_000) +
       Math.min(inputs.section80TTB, bracket !== "regular" ? 50_000 : 0) +
       Math.min(inputs.standardDeduction, 50_000);

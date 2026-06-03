@@ -38,17 +38,22 @@ export const FUND_CATEGORY_RETURNS: Record<string, number> = {
 
 export type RiskAppetite = "conservative" | "moderate" | "aggressive";
 
+// Diversified residual-corpus construction — assured debt, equity hedge,
+// predictable income, opportunistic, plus Indian & foreign equity.
 export const RISK_ALLOCATION: Record<RiskAppetite, Record<string, number>> = {
-  conservative: { DAA_HYBRID: 0.70, LARGE_CAP: 0.20, FLEXI_CAP: 0.10 },
-  moderate:     { DAA_HYBRID: 0.50, LARGE_CAP: 0.20, FLEXI_CAP: 0.30 },
-  aggressive:   { DAA_HYBRID: 0.50, LARGE_CAP: 0.12, FLEXI_CAP: 0.38 },
+  conservative: { BONDS: 0.40, GOLD_SILVER: 0.10, REITS: 0.15, ARBITRAGE: 0.10, INDIAN_EQUITY: 0.20, FOREIGN_EQUITY: 0.05 },
+  moderate:     { BONDS: 0.30, GOLD_SILVER: 0.10, REITS: 0.10, ARBITRAGE: 0.10, INDIAN_EQUITY: 0.25, FOREIGN_EQUITY: 0.15 },
+  aggressive:   { BONDS: 0.20, GOLD_SILVER: 0.10, REITS: 0.10, ARBITRAGE: 0.05, INDIAN_EQUITY: 0.35, FOREIGN_EQUITY: 0.20 },
 };
 
 // (stp_months, deployment_horizon_years)
 export const STP_RULES: Record<string, [number, number]> = {
-  DAA_HYBRID: [2, 4],
-  LARGE_CAP:  [3, 5],
-  FLEXI_CAP:  [9, 7],
+  BONDS:          [2, 3],
+  GOLD_SILVER:    [3, 5],
+  REITS:          [3, 5],
+  ARBITRAGE:      [1, 2],
+  INDIAN_EQUITY:  [6, 7],
+  FOREIGN_EQUITY: [9, 8],
 };
 
 // ────────────────────────────────────────────────────────────────────────────

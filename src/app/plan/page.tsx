@@ -108,7 +108,7 @@ function PlanPageInner() {
           {profile?.fullName ? `${profile.fullName}, ` : ""}here&apos;s your retirement plan
         </h1>
         <p className="mt-2 text-slate-600">
-          Built around the bucket strategy. Designed to last {plan.projections.length} years.
+          Built around the bucket strategy — designed to give you steady income for {plan.projections.length}+ years after retirement.
         </p>
       </div>
 
@@ -188,7 +188,7 @@ function PlanPageInner() {
         </div>
       </div>
 
-      {/* THE CLINCHER — Retire 360 vs Local Agent comparison */}
+      {/* THE CLINCHER — Retirement360 vs Local Agent comparison */}
       {comparison && <ComparisonPanel comparison={comparison} planYears={plan.projections.length} />}
 
       {/* ─────────────── ENGINE-DRIVEN 3-STAGE ROADMAP ─────────────── */}
@@ -200,7 +200,7 @@ function PlanPageInner() {
               <h2 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight">Your specialist plan, calculated to the rupee</h2>
             </div>
             <span className="text-xs text-slate-500 bg-slate-100 rounded-full px-3 py-1">
-              🔒 Calculated by Retire 360 engine — Excel-verified
+              🔒 Calculated by Retirement360 engine — Excel-verified
             </span>
           </div>
           <EngineRoadmap client={engineClient} plan={enginePlan} />
@@ -228,7 +228,16 @@ function PlanPageInner() {
       {/* Bucket allocation */}
       <section id="buckets" className="mb-12 scroll-mt-20">
         <h2 className="text-2xl font-bold mb-2">Your bucket allocation</h2>
-        <p className="text-slate-600 mb-6">Total corpus of {formatINR(plan.totalCorpus, { compact: true })} split across three time horizons.</p>
+        <p className="text-slate-600 mb-3">Total corpus of {formatINR(plan.totalCorpus, { compact: true })} split across three time horizons — by <strong>when</strong> you&apos;ll need the money.</p>
+        <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 mb-6 text-sm text-slate-700">
+          <p className="font-semibold text-slate-900 mb-1">How this works</p>
+          <p>
+            You draw income from the <strong>Safety</strong> bucket first (guaranteed, for the next few years) while the
+            {" "}<strong>Income</strong> bucket covers the medium term and the <strong>Growth</strong> bucket keeps compounding
+            to beat inflation. As each bucket runs down, the next one has already grown to refill it — so your money keeps
+            working and lasts the full 30+ years.
+          </p>
+        </div>
 
         <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
           <div className="card">
@@ -405,7 +414,7 @@ function ComparisonPanel({ comparison, planYears }: { comparison: ComparisonResu
           What happens if you go to a local agent instead?
         </h2>
         <p className="mt-2 text-slate-600 max-w-2xl mx-auto">
-          A typical local agent parks your corpus in FDs, all in one spouse&apos;s name. Here&apos;s the difference over {planYears} years.
+          A typical local agent parks your corpus in just one basket, without understanding the power of diversification. Here&apos;s the difference over {planYears} years.
         </p>
       </div>
 
@@ -427,12 +436,12 @@ function ComparisonPanel({ comparison, planYears }: { comparison: ComparisonResu
           </div>
         </div>
 
-        {/* Retire 360 side */}
+        {/* Retirement360 side */}
         <div className="rounded-2xl bg-white border-2 border-primary overflow-hidden shadow-md">
           <div className="bg-primary-light px-5 py-3 border-b border-primary">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-primary" />
-              <h3 className="font-bold text-slate-900">Retire 360 Plan (3-stage, spouse-split, SWP)</h3>
+              <h3 className="font-bold text-slate-900">Retirement360 Plan (3-stage, spouse-split, SWP)</h3>
             </div>
           </div>
           <div className="p-5 space-y-3">
@@ -465,7 +474,7 @@ function ComparisonPanel({ comparison, planYears }: { comparison: ComparisonResu
 
       {extraYears > 0 && (
         <p className="text-center text-slate-700 text-sm mt-4">
-          <strong>Plus:</strong> Your corpus lasts <strong className="text-primary">{extraYears} more year{extraYears === 1 ? "" : "s"}</strong> with the Retire 360 plan.
+          <strong>Plus:</strong> Your corpus lasts <strong className="text-primary">{extraYears} more year{extraYears === 1 ? "" : "s"}</strong> with the Retirement360 plan.
         </p>
       )}
 

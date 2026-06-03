@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Sparkles, Menu, X } from "lucide-react";
+import { AuthButton } from "@/components/AuthButton";
 
 const NAV_LINKS = [
   { href: "/onboarding", label: "Get Started" },
@@ -40,7 +41,7 @@ export function Navbar() {
           <span className="inline-flex items-center justify-center w-9 h-9 bg-primary text-white rounded-xl">
             <Sparkles className="w-5 h-5" />
           </span>
-          <span className="font-bold text-xl tracking-tight">Retire 360</span>
+          <span className="font-bold text-xl tracking-tight">Retirement360</span>
         </Link>
 
         {/* Desktop nav */}
@@ -58,6 +59,7 @@ export function Navbar() {
               </Link>
             );
           })}
+          <AuthButton />
         </nav>
 
         {/* Mobile hamburger */}
@@ -91,6 +93,7 @@ export function Navbar() {
                 </Link>
               );
             })}
+            <AuthButton mobile />
           </nav>
         </div>
       )}

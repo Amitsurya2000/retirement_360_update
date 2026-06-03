@@ -114,10 +114,9 @@ export function generateBuckets(inputs: PlanInputs): Bucket[] {
   // ---- BUCKET 2: Income (3-10 years) ----
   const b2Amount = corpus * alloc.b2;
   const pmvvyAlloc = scssEligible ? Math.min(b2Amount * 0.20, 15_00_000) : 0;
-  const rbiBondAlloc = b2Amount * 0.20;
-  const debtMfAlloc = b2Amount * 0.35;
-  const corpFdAlloc = b2Amount * 0.15;
-  const taxFreeBondAlloc = b2Amount - pmvvyAlloc - rbiBondAlloc - debtMfAlloc - corpFdAlloc;
+  const debtMfAlloc = b2Amount * 0.45;
+  const corpFdAlloc = b2Amount * 0.25;
+  const taxFreeBondAlloc = b2Amount - pmvvyAlloc - debtMfAlloc - corpFdAlloc;
 
   const bucket2Instruments: InstrumentAllocation[] = [];
   if (pmvvyAlloc > 0) {
@@ -128,12 +127,6 @@ export function generateBuckets(inputs: PlanInputs): Bucket[] {
       notes: "10-year guaranteed pension. Subject to availability — verify with LIC.",
     });
   }
-  bucket2Instruments.push({
-    name: "RBI Floating Rate Savings Bonds",
-    amount: rbiBondAlloc,
-    expectedReturn: 8.05,
-    notes: "Rate resets every 6 months. 7-year tenure. Govt-backed.",
-  });
   bucket2Instruments.push({
     name: "Debt Mutual Funds (SWP)",
     amount: debtMfAlloc,
@@ -156,36 +149,52 @@ export function generateBuckets(inputs: PlanInputs): Bucket[] {
   }
 
   // ---- BUCKET 3: Growth (10-25 years) ----
+  // Diversified construction — not a single hybrid/large-cap bet:
+  // assured debt + equity hedge + predictable income + opportunistic + Indian & foreign equity.
   const b3Amount = corpus * alloc.b3;
-  const hybridAlloc = b3Amount * 0.40;
-  const largeCapAlloc = b3Amount * 0.35;
-  const dividendStockAlloc = b3Amount * 0.15;
-  const reitAlloc = b3Amount * 0.10;
+  const bondsAlloc      = b3Amount * 0.30;
+  const goldSilverAlloc = b3Amount * 0.10;
+  const reitAlloc       = b3Amount * 0.15;
+  const arbitrageAlloc  = b3Amount * 0.10;
+  const indianEqAlloc   = b3Amount * 0.25;
+  const foreignEqAlloc  = b3Amount * 0.10;
 
   const bucket3Instruments: InstrumentAllocation[] = [
     {
-      name: "Conservative Hybrid Mutual Funds",
-      amount: hybridAlloc,
-      expectedReturn: 9.5,
-      notes: "65-75% debt + equity. Lower volatility than pure equity.",
+      name: "Corporate & Govt Bonds",
+      amount: bondsAlloc,
+      expectedReturn: 7.5,
+      notes: "Assured debt returns from high-grade corporate and government bonds.",
     },
     {
-      name: "Large-cap Equity MF (SWP after year 5)",
-      amount: largeCapAlloc,
-      expectedReturn: 12.0,
-      notes: "Index/large-cap funds. Let it compound, withdraw via SWP later.",
-    },
-    {
-      name: "Blue-chip Dividend Stocks",
-      amount: dividendStockAlloc,
-      expectedReturn: 11.0,
-      notes: "HDFC Bank, ITC, Hindustan Unilever, TCS etc. Dividend + appreciation.",
+      name: "Gold & Silver",
+      amount: goldSilverAlloc,
+      expectedReturn: 8.0,
+      notes: "Hedge against equity — cushions the portfolio when markets fall.",
     },
     {
       name: "REITs (Embassy, Mindspace, Brookfield)",
       amount: reitAlloc,
       expectedReturn: 8.5,
-      notes: "Quarterly distributions. Real-estate-like income without property hassle.",
+      notes: "Predictable quarterly income — real-estate-like returns without owning property.",
+    },
+    {
+      name: "Arbitrage Funds",
+      amount: arbitrageAlloc,
+      expectedReturn: 7.0,
+      notes: "Low-risk, tax-efficient parking for any opportunistic upside.",
+    },
+    {
+      name: "Indian Equity",
+      amount: indianEqAlloc,
+      expectedReturn: 12.0,
+      notes: "Long-term inflation-beating growth via Indian equity funds. Withdraw via SWP later.",
+    },
+    {
+      name: "Foreign Equity",
+      amount: foreignEqAlloc,
+      expectedReturn: 12.0,
+      notes: "Global diversification — exposure beyond the Indian market.",
     },
   ];
 
@@ -324,14 +333,14 @@ export function generatePlan(inputs: PlanInputs): GeneratedPlan {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// "Local Agent" naive baseline — compare against the Retire 360 plan.
+// "Local Agent" naive baseline — compare against the Retirement360 plan.
 //
 // Assumptions for the local-agent scenario:
 //   • Entire corpus parked in fixed deposits at 7% (no diversification)
 //   • All income credited to ONE spouse (no name-splitting tax benefit)
 //     → entire FD interest taxed at marginal slab
 //   • No SWP (only FD interest payouts), no liability ring-fencing
-//   • Same monthly withdrawal target as the Retire 360 plan
+//   • Same monthly withdrawal target as the Retirement360 plan
 //
 // This represents the typical "park it all in FDs and trust me" advice.
 // ─────────────────────────────────────────────────────────────────────
@@ -435,7 +444,7 @@ export interface ComparisonResult {
 export function compareWithLocalAgent(inputs: PlanInputs, retireWellPlan: GeneratedPlan): ComparisonResult {
   const naive = generateNaivePlan(inputs);
 
-  // For the Retire 360 scenario, assume the spouse-split framework is applied:
+  // For the Retirement360 scenario, assume the spouse-split framework is applied:
   // income is split across both spouses so each stays under ₹12L/year → near-zero tax.
   // We use the gross income from the bucket plan but recompute tax as if each spouse
   // receives half (the spouse-split framework's whole point).

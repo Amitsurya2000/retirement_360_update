@@ -4,6 +4,8 @@ import { z } from "zod";
 export const profileSchema = z.object({
   // Step 1
   fullName: z.string().optional(),
+  phone: z.string().optional(),
+  companyName: z.string().optional(),
   age: z.number().min(40).max(95),
   gender: z.enum(["male", "female", "other"]),
   maritalStatus: z.enum(["single", "married", "widowed", "divorced"]),
@@ -69,6 +71,8 @@ export type ProfileData = z.infer<typeof profileSchema>;
 
 export const defaultProfile: ProfileData = {
   fullName: "",
+  phone: "",
+  companyName: "",
   age: 60,
   gender: "male",
   maritalStatus: "married",
@@ -103,7 +107,7 @@ export const defaultProfile: ProfileData = {
   inflationRate: 6,
 
   riskAppetite: "moderate",
-  planningHorizon: 25,
+  planningHorizon: 30,
   legacyAmount: 0,
   bucketListGoals: [],
 

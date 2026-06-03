@@ -18,7 +18,6 @@ export default function TaxPage() {
     dividendsAnnual: 0,
     otherAnnual: 0,
     section80C: 1_50_000,
-    section80D: 50_000,
     section80DDB: 0,
     section80TTB: 50_000,
     standardDeduction: 50_000,
@@ -79,9 +78,6 @@ export default function TaxPage() {
               <Field label="Section 80C" helper="PPF, ELSS, LIC, NSC — max ₹1.5L">
                 <MoneyInput value={inputs.section80C} onChange={(v) => update({ section80C: v })} />
               </Field>
-              <Field label="Section 80D — Health insurance" helper={`Seniors: up to ₹50k self + ₹50k parents = ₹1L max`}>
-                <MoneyInput value={inputs.section80D} onChange={(v) => update({ section80D: v })} />
-              </Field>
               <Field label="Section 80DDB — Specified diseases" helper="Seniors: up to ₹1L for cancer, kidney failure, etc.">
                 <MoneyInput value={inputs.section80DDB} onChange={(v) => update({ section80DDB: v })} />
               </Field>
@@ -140,11 +136,6 @@ export default function TaxPage() {
                 applied={inputs.section80TTB >= 50_000}
               />
               <Tip
-                title="Max out Section 80D for health insurance"
-                body="Pay ₹50k premium for yourself + another ₹50k if you pay for your parents' (also senior) health cover. Total ₹1L deductible."
-                applied={inputs.section80D >= 50_000}
-              />
-              <Tip
                 title="Prefer SWP over interest income"
                 body="Systematic Withdrawal Plans from debt mutual funds are more tax-efficient than FDs because only the gain portion is taxed (not the principal you withdraw)."
               />
@@ -176,7 +167,7 @@ export default function TaxPage() {
             <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div className="text-sm text-blue-900">
               <p className="font-semibold mb-1">This is a simplified calculator.</p>
-              <p>Actual tax may vary based on exact slabs, surcharge thresholds, and recent budget changes. Verify with a CA before filing. We assume FY 2024-25 slabs.</p>
+              <p>Actual tax may vary based on exact slabs, surcharge thresholds, and recent budget changes. Verify with a CA before filing. We assume FY 2025-26 slabs.</p>
             </div>
           </div>
         </div>

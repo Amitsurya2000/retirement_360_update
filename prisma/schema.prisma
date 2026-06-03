@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model UserProfile {
@@ -12,8 +13,14 @@ model UserProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Linked signed-in user (Supabase auth) — set server-side, not from the form.
+  userId    String?
+  email     String?
+
   // Step 1 — Personal
   fullName        String?
+  phone           String?
+  companyName     String?
   age             Int
   gender          String
   maritalStatus   String

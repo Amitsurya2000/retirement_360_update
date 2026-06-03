@@ -23,6 +23,9 @@ export default function Home() {
               We don&apos;t sell products. We design your monthly income, protect your big expenses,
               and grow what&apos;s left — <span className="font-semibold text-slate-900">for YOU.</span>
             </p>
+            <p className="mt-5 text-base md:text-lg font-semibold text-primary italic">
+              Redefining how India prepares for life after 60.
+            </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Link href="/onboarding" className="btn-primary inline-flex items-center justify-center gap-2 text-lg">
                 {BRAND.ctaPrimary}
@@ -33,7 +36,7 @@ export default function Home() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-slate-500">
-              5-minute conversation · No signup required · Your data stays on your device
+              5-minute conversation · Free sign-in with Google · Your data is private &amp; secure
             </p>
 
             <div className="mt-10 max-w-2xl">
@@ -62,11 +65,12 @@ export default function Home() {
               <Calculator className="w-6 h-6" />
             </div>
             <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-1">Priority #1</p>
-            <h3 className="text-xl font-semibold mb-2">Your tax-free monthly income</h3>
+            <h3 className="text-xl font-semibold mb-2">Your tax-free* monthly income</h3>
             <p className="text-slate-600 leading-relaxed text-sm">
               We split the income between you and your spouse so each stays under ₹12 Lakh/year —
               the entire amount is <strong>non-taxable for life</strong>. Most agents never do this.
             </p>
+            <p className="text-xs text-slate-400 mt-2">*Depends on you and your spouse&apos;s existing income — we check both before deciding.</p>
           </div>
           <div className="card hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
@@ -114,10 +118,10 @@ export default function Home() {
               </div>
               <ul className="space-y-3 text-sm">
                 <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Pushes the policy that pays them the highest commission</span></li>
-                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Parks everything in FDs or a single annuity — no diversification</span></li>
+                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Parks everything in just one basket — no retirement-specific diversification</span></li>
                 <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Ignores your spouse&apos;s tax-free ceiling — you pay 20–30% tax unnecessarily</span></li>
-                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>No plan for daughter&apos;s wedding, education, travel — it just &quot;comes out of FDs&quot;</span></li>
-                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Vanishes after the sale — you&apos;re alone for 25 years</span></li>
+                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>No planning for big liabilities — children&apos;s marriage, travel — so funds get withdrawn at higher tax slabs</span></li>
+                <li className="flex gap-2"><X className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><span>Takes care of only the investment — no roadmap for what happens to it after you</span></li>
               </ul>
             </div>
             <div className="rounded-2xl bg-primary-light border-2 border-primary p-6 shadow-md">
@@ -128,10 +132,10 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-slate-900">{BRAND.name} Specialists</h3>
               </div>
               <ul className="space-y-3 text-sm">
-                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span><strong>Zero commissions</strong> — we don&apos;t sell products. Our job is your plan.</span></li>
-                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span>Diversify across SCSS, POMIS, RBI Bonds, NPS annuity, MF SWP — each instrument for its specific job</span></li>
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span><strong>Advice-first, not product-first</strong> — we design your plan, not a policy to sell you.</span></li>
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span>Diversify across SCSS, POMIS, NPS annuity, MF SWP, bonds, gold &amp; REITs — each instrument for its specific job</span></li>
                 <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span><strong>Split income across both spouses</strong> — keep your monthly income fully tax-free for life</span></li>
-                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span>Ring-fence wedding/education/travel funds separately — protected from market dips</span></li>
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span>Keep money for big expenses — wedding, education, travel — in a separate safe pocket, so market ups and downs never touch your monthly income</span></li>
                 <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span>Stay with you — quarterly reviews as rates, slabs, and your goals change</span></li>
               </ul>
             </div>
@@ -213,7 +217,7 @@ export default function Home() {
         </div>
         <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs text-slate-500">
           <div className="flex items-center gap-1.5"><Users className="w-4 h-4" /> Built for Indian retirees</div>
-          <div className="flex items-center gap-1.5"><Award className="w-4 h-4" /> Method used by SEBI-registered advisors</div>
+          <div className="flex items-center gap-1.5"><Award className="w-4 h-4" /> Built by AMFI Registered Mutual Fund Distributors</div>
           <div className="flex items-center gap-1.5"><Receipt className="w-4 h-4" /> Educational guidance, not investment advice</div>
         </div>
       </section>

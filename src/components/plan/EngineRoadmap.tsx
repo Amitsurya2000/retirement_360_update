@@ -181,8 +181,9 @@ export function EngineRoadmap({ client, plan }: Props) {
           </div>
         </div>
         <p className="text-slate-600 mb-4">
-          Remaining <strong>{formatINR(plan.swpCorpus, { compact: true })}</strong> invested in equity/hybrid funds,
-          kept 100% liquid. SWP gives you inflation top-ups later, taxed at just 12.5% LTCG.
+          Remaining <strong>{formatINR(plan.swpCorpus, { compact: true })}</strong> spread across a diversified mix —
+          corporate &amp; govt bonds, gold &amp; silver, REITs, arbitrage, and Indian &amp; foreign equity — kept 100% liquid.
+          SWP gives you inflation top-ups later, in a tax-efficient way.
         </p>
 
         <div className="grid sm:grid-cols-3 gap-3 mb-4">

@@ -6,6 +6,7 @@ import { ProfileData, defaultProfile } from "@/lib/types";
 import { formatINR, parseINR } from "@/lib/format";
 import { Sparkles, User as UserIcon, Check, Minus, Plus, ArrowLeft } from "lucide-react";
 import { Language, LANGUAGES, Strings, t } from "@/lib/translations";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 interface Liability {
   name: string;
@@ -38,6 +39,7 @@ interface Step {
   suffix?: string;
   placeholder?: string;
   initial?: (d: ProfileData) => number;
+  prefill?: (d: ProfileData) => string;
   skippable?: boolean;
   showIf?: (d: ProfileData) => boolean;
   apply: (d: ProfileData, value: AnswerValue) => Partial<ProfileData>;
@@ -54,9 +56,27 @@ function buildSteps(s: Strings): Step[] {
       type: "text",
       skippable: true,
       placeholder: s.nameInputPlaceholder,
+      prefill: (d) => d.fullName ?? "",
       question: () => s.greetingForName,
       apply: (_d, v) => ({ fullName: String(v).trim() }),
       answerLabel: (v) => (String(v).trim() ? String(v).trim() : s.answerNameSkipped),
+    },
+    {
+      id: "phone",
+      type: "text",
+      placeholder: "e.g. 98765 43210",
+      question: (d) => `${firstName(d.fullName) ? `Thanks, ${firstName(d.fullName)}! ` : ""}What's the best phone number to reach you on?`,
+      apply: (_d, v) => ({ phone: String(v).trim() }),
+      answerLabel: (v) => (String(v).trim() ? String(v).trim() : "—"),
+    },
+    {
+      id: "company",
+      type: "text",
+      skippable: true,
+      placeholder: "Company name (optional)",
+      question: () => "Which company do you work for, or did you retire from?",
+      apply: (_d, v) => ({ companyName: String(v).trim() }),
+      answerLabel: (v) => (String(v).trim() ? String(v).trim() : "Skipped"),
     },
     {
       id: "age",
@@ -189,20 +209,6 @@ function buildSteps(s: Strings): Step[] {
       answerLabel: (v) => (v === "yes" ? s.answerHealthYes : s.answerHealthNo),
     },
     {
-      id: "healthCover",
-      type: "money",
-      showIf: (d) => d.hasHealthInsurance,
-      question: () => s.healthCoverQuestion,
-      presets: [
-        { label: "₹5 L", value: 5_00_000 },
-        { label: "₹10 L", value: 10_00_000 },
-        { label: "₹25 L", value: 25_00_000 },
-        { label: "₹50 L", value: 50_00_000 },
-      ],
-      apply: (_d, v) => ({ healthCover: Number(v) }),
-      answerLabel: (v) => formatINR(Number(v), { compact: true }),
-    },
-    {
       // EPS pension — fixed monthly amount; locked to the EPS member (usually husband).
       id: "eps",
       type: "money",
@@ -246,14 +252,35 @@ export function ChatOnboarding() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
 
   const s = t(lang ?? "en");
   const STEPS = buildSteps(s);
   const step = STEPS[idx];
 
+  // Pre-fill the name from the signed-in Google account (less typing for users).
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [transcript, idx, submitting, lang]);
+    if (!isSupabaseConfigured) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const name =
+        (user?.user_metadata?.full_name as string) ||
+        (user?.user_metadata?.name as string) ||
+        "";
+      if (name) setData((d) => (d.fullName ? d : { ...d, fullName: name }));
+    });
+  }, []);
+
+  useEffect(() => {
+    // While building the plan, scroll to the spinner at the bottom.
+    // Otherwise scroll so the CURRENT QUESTION sits at the top — the user
+    // reads the question first, then the options below it.
+    if (submitting) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      questionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [idx, submitting, lang]);
 
   const nextVisibleIndex = (from: number, d: ProfileData): number => {
     let i = from;
@@ -361,12 +388,12 @@ export function ChatOnboarding() {
         ))}
 
         {!submitting && (
-          <>
+          <div ref={questionRef} className="space-y-5 scroll-mt-32">
             <Bubble role="bot" text={step.question(data)} />
             <div className="pl-12 animate-fade-in">
               <StepInput key={step.id} step={step} data={data} onAnswer={handleAnswer} strings={s} />
             </div>
-          </>
+          </div>
         )}
 
         {submitting && (
@@ -457,7 +484,7 @@ function StepInput({
   onAnswer: (v: AnswerValue) => void;
   strings: Strings;
 }) {
-  if (step.type === "text") return <TextInput step={step} onAnswer={onAnswer} strings={strings} />;
+  if (step.type === "text") return <TextInput step={step} data={data} onAnswer={onAnswer} strings={strings} />;
   if (step.type === "stepper") return <StepperInput step={step} data={data} onAnswer={onAnswer} strings={strings} />;
   if (step.type === "choice") return <ChoiceInput step={step} onAnswer={onAnswer} />;
   if (step.type === "money") return <MoneyInput step={step} onAnswer={onAnswer} strings={strings} />;
@@ -469,8 +496,8 @@ function StepInput({
 const BIG_BTN =
   "w-full text-left rounded-2xl border-2 px-5 py-4 text-lg font-medium transition-all border-slate-200 bg-white hover:border-primary hover:bg-primary-light active:scale-[0.99]";
 
-function TextInput({ step, onAnswer, strings }: { step: Step; onAnswer: (v: AnswerValue) => void; strings: Strings }) {
-  const [value, setValue] = useState("");
+function TextInput({ step, data, onAnswer, strings }: { step: Step; data: ProfileData; onAnswer: (v: AnswerValue) => void; strings: Strings }) {
+  const [value, setValue] = useState(step.prefill ? step.prefill(data) : "");
   return (
     <form
       onSubmit={(e) => {

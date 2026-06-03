@@ -1,5 +1,5 @@
 /**
- * Map a saved Retire 360 profile (Prisma `UserProfile`) into a `Client`
+ * Map a saved Retirement360 profile (Prisma `UserProfile`) into a `Client`
  * input for the deterministic retirement engine.
  *
  * The current chat onboarding doesn't yet collect every engine field
@@ -214,8 +214,8 @@ export function profileToClient(profile: UserProfile): Client {
     swp: {
       ...defaultSWPParams(),
       currentAge: profile.age,
-      // Withdrawals start ~2 years after retirement age, per the standard framework.
-      withdrawalStartAge: profile.age + 2,
+      // Withdrawals start ~3 years after retirement age (after 63 for a 60-yr-old), per the standard framework.
+      withdrawalStartAge: profile.age + 3,
     },
     swpCorpusOverride: remainingForSWP > 0 ? Math.round(remainingForSWP) : null,
   };
