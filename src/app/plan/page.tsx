@@ -3,34 +3,23 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { GeneratedPlan, ComparisonResult } from "@/lib/calculations";
-import { BuiltPlan as EngineBuiltPlan, Client as EngineClient } from "@/lib/retirement-engine";
+import type { BuiltPlan as EngineBuiltPlan, Client as EngineClient } from "@/lib/retirement-engine";
 import { formatINR, formatPct } from "@/lib/format";
-import { BucketCard } from "@/components/plan/BucketCard";
-import { BucketPieChart, MonthlyIncomeChart, CorpusDepletionChart, PurchasingPowerChart } from "@/components/plan/PlanCharts";
 import { EngineRoadmap } from "@/components/plan/EngineRoadmap";
-import { CongratsModal } from "@/components/plan/CongratsModal";
 import { SWPCorpusChart, SWPMonthlyChart } from "@/components/plan/SWPProjectionChart";
-import { ArrowRight, Receipt, AlertTriangle, CheckCircle2, RefreshCw, X, TrendingUp, ShieldCheck, Download } from "lucide-react";
+import { CongratsModal } from "@/components/plan/CongratsModal";
 import { WealthManagerCTA } from "@/components/WealthManagerCTA";
+import { ArrowRight, Receipt, AlertTriangle, Download } from "lucide-react";
 
 function PlanPageInner() {
   const params = useSearchParams();
   const idFromUrl = params.get("id");
   const [profileId, setProfileId] = useState<string | null>(idFromUrl);
-  const [plan, setPlan] = useState<GeneratedPlan | null>(null);
-  const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [engineClient, setEngineClient] = useState<EngineClient | null>(null);
   const [enginePlan, setEnginePlan] = useState<EngineBuiltPlan | null>(null);
   const [profile, setProfile] = useState<{ fullName?: string | null; age: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // What-if overrides
-  const [inflation, setInflation] = useState<number | null>(null);
-  const [income, setIncome] = useState<number | null>(null);
-
-  // Celebration popup shown once when the plan is fully funded.
   const [congratsDismissed, setCongratsDismissed] = useState(false);
 
   // If no id in URL, try localStorage
@@ -45,16 +34,10 @@ function PlanPageInner() {
   useEffect(() => {
     if (!profileId) return;
     setLoading(true);
-    const query = new URLSearchParams({ id: profileId });
-    if (inflation !== null) query.set("inflation", inflation.toString());
-    if (income !== null) query.set("income", income.toString());
-
-    fetch(`/api/plan?${query}`)
+    fetch(`/api/plan?id=${profileId}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
-        setPlan(d.plan);
-        setComparison(d.comparison);
         setProfile(d.profile);
         if (d.engine) {
           setEngineClient(d.engine.client);
@@ -63,9 +46,9 @@ function PlanPageInner() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [profileId, inflation, income]);
+  }, [profileId]);
 
-  // Generate + store the plan PDF once (for your records + the download button).
+  // Generate + store the plan PDF (for records + the download button).
   useEffect(() => {
     if (!profileId) return;
     fetch(`/api/plan-pdf?id=${profileId}`).catch(() => {});
@@ -88,7 +71,7 @@ function PlanPageInner() {
     );
   }
 
-  if (loading && !plan) {
+  if (loading && !enginePlan) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4" />
@@ -97,7 +80,7 @@ function PlanPageInner() {
     );
   }
 
-  if (error || !plan) {
+  if (error || !enginePlan || !engineClient) {
     return (
       <div className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h1 className="text-2xl font-bold mb-3">Couldn&apos;t load your plan</h1>
@@ -107,23 +90,25 @@ function PlanPageInner() {
     );
   }
 
-  const willLast = plan.shortfallYear === null;
-  // Eligibility follows the 3-stage roadmap engine (the advisor method): the
-  // monthly income floor is met AND the corpus covers Stage 1 + Stage 2.
-  const engineRemaining = enginePlan?.remainingCorpus ?? 0;
-  const engineTotal = enginePlan?.totalCorpus ?? 0;
-  const isEligible =
-    enginePlan != null &&
-    enginePlan.stage1.status !== "UNDERFUNDED" &&
-    engineRemaining >= 0;
-  // "Comfortable" = the growth surplus is a healthy share (>=20%) of the corpus.
+  // ---- Eligibility (3-stage roadmap engine = the advisor method) ----
+  const engineRemaining = enginePlan.remainingCorpus;
+  const engineTotal = enginePlan.totalCorpus;
+  const isEligible = enginePlan.stage1.status !== "UNDERFUNDED" && engineRemaining >= 0;
   const isComfortable = isEligible && engineRemaining >= 0.2 * engineTotal;
+
+  const fullName = profile?.fullName?.trim();
+  const wanted = engineClient.requiredMonthlyIncome;
+  const managed = enginePlan.stage1.managed;
+  const shortBy = Math.max(0, -engineRemaining);
+  const surplus = Math.max(0, engineRemaining);
+  const liabs = engineClient.liabilities ?? [];
+  const biggest = liabs.length ? liabs.reduce((a, b) => (b.amount > a.amount ? b : a)) : null;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       {isComfortable && !congratsDismissed && (
         <CongratsModal
-          name={profile?.fullName?.trim()}
+          name={fullName}
           subtitle={`Your corpus comfortably funds your income, your big expenses are covered, and ${formatINR(engineRemaining, { compact: true })} is left growing for your future. You're all set!`}
           onClose={() => setCongratsDismissed(true)}
         />
@@ -133,10 +118,10 @@ function PlanPageInner() {
       <div className="mb-6">
         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Your Personalized Plan</p>
         <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">
-          {profile?.fullName ? `${profile.fullName}, ` : ""}here&apos;s your retirement plan
+          {fullName ? `${fullName}, ` : ""}here&apos;s your retirement plan
         </h1>
         <p className="mt-2 text-slate-600">
-          Built around the bucket strategy — designed to give you steady income for {plan.projections.length}+ years after retirement.
+          Built on the 3-stage roadmap — a steady monthly income, your big expenses ring-fenced, and the rest grown for the future.
         </p>
         <a
           href={`/api/plan-pdf?id=${profileId}`}
@@ -147,316 +132,127 @@ function PlanPageInner() {
       </div>
 
       {/* Eligibility result */}
-      {(() => {
-        const fullName = profile?.fullName?.trim();
-        const shortBy = Math.max(0, -engineRemaining);
-        const surplus = Math.max(0, engineRemaining);
-        const wanted = engineClient?.requiredMonthlyIncome ?? 0;
-        const liabs = engineClient?.liabilities ?? [];
-        const biggest = liabs.length ? liabs.reduce((a, b) => (b.amount > a.amount ? b : a)) : null;
-
-        if (isComfortable) {
-          return (
-            <div className="mb-8 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 flex items-start gap-3">
-              <span className="text-3xl leading-none">🎉</span>
-              <div>
-                <h2 className="text-xl font-bold text-emerald-800">
-                  Congratulations{fullName ? `, ${fullName}` : ""}! You&apos;re eligible 🎊
-                </h2>
-                <p className="text-emerald-700 text-sm mt-1">
-                  Your corpus <strong>comfortably</strong> funds your <strong>{formatINR(wanted)}/month</strong> income,
-                  your big expenses are ring-fenced, and you still have <strong>{formatINR(surplus, { compact: true })}</strong>{" "}
-                  growing for the future. You&apos;re all set!
-                </p>
-              </div>
-            </div>
-          );
-        }
-        if (isEligible) {
-          return (
-            <div className="mb-8 rounded-2xl border-2 border-sky-300 bg-sky-50 p-5 flex items-start gap-3">
-              <span className="text-3xl leading-none">✅</span>
-              <div>
-                <h2 className="text-xl font-bold text-sky-800">
-                  You&apos;re eligible{fullName ? `, ${fullName}` : ""} — just comfortably enough
-                </h2>
-                <p className="text-sky-700 text-sm mt-1">
-                  Your <strong>{formatINR(wanted)}/month</strong> income is fully funded and your big expenses are
-                  covered. Your growth surplus is modest (<strong>{formatINR(surplus, { compact: true })}</strong>) —
-                  adding a little more corpus would give you a stronger cushion for later years.
-                </p>
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div className="mb-8 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 flex items-start gap-3">
-            <AlertTriangle className="w-7 h-7 text-amber-600 shrink-0" />
-            <div>
-              <h2 className="text-xl font-bold text-amber-800">
-                Almost there{fullName ? `, ${fullName}` : ""} — a small gap to close
-              </h2>
-              <p className="text-amber-700 text-sm mt-1">
-                To fund <strong>{formatINR(wanted)}/month</strong> plus your big expenses, your corpus is short by
-                about <strong>{formatINR(shortBy)}</strong>. Any one of these closes the gap:
-              </p>
-              <ul className="text-amber-700 text-sm mt-2 space-y-1 list-disc list-inside">
-                <li>
-                  Add about <strong>{formatINR(shortBy)}</strong> more to your retirement corpus (the
-                  {" "}&quot;how much have you saved&quot; step).
-                </li>
-                {biggest && (
-                  <li>
-                    Trim a big expense — e.g. reduce <strong>{biggest.head}</strong>{" "}
-                    ({formatINR(biggest.amount, { compact: true })}) by up to{" "}
-                    <strong>{formatINR(Math.min(shortBy, biggest.amount))}</strong>.
-                  </li>
-                )}
-                <li>Lower your desired monthly income a little.</li>
-              </ul>
-            </div>
+      {isComfortable ? (
+        <div className="mb-8 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 flex items-start gap-3">
+          <span className="text-3xl leading-none">🎉</span>
+          <div>
+            <h2 className="text-xl font-bold text-emerald-800">
+              Congratulations{fullName ? `, ${fullName}` : ""}! You&apos;re eligible 🎊
+            </h2>
+            <p className="text-emerald-700 text-sm mt-1">
+              Your corpus <strong>comfortably</strong> funds your <strong>{formatINR(wanted)}/month</strong> income,
+              your big expenses are ring-fenced, and you still have <strong>{formatINR(surplus, { compact: true })}</strong>{" "}
+              growing for the future. You&apos;re all set!
+            </p>
           </div>
-        );
-      })()}
+        </div>
+      ) : isEligible ? (
+        <div className="mb-8 rounded-2xl border-2 border-sky-300 bg-sky-50 p-5 flex items-start gap-3">
+          <span className="text-3xl leading-none">✅</span>
+          <div>
+            <h2 className="text-xl font-bold text-sky-800">
+              You&apos;re eligible{fullName ? `, ${fullName}` : ""} — just comfortably enough
+            </h2>
+            <p className="text-sky-700 text-sm mt-1">
+              Your <strong>{formatINR(wanted)}/month</strong> income is fully funded and your big expenses are
+              covered. Your growth surplus is modest (<strong>{formatINR(surplus, { compact: true })}</strong>) —
+              adding a little more corpus would give you a stronger cushion for later years.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-8 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 flex items-start gap-3">
+          <AlertTriangle className="w-7 h-7 text-amber-600 shrink-0" />
+          <div>
+            <h2 className="text-xl font-bold text-amber-800">
+              Almost there{fullName ? `, ${fullName}` : ""} — a small gap to close
+            </h2>
+            <p className="text-amber-700 text-sm mt-1">
+              To fund <strong>{formatINR(wanted)}/month</strong> plus your big expenses, your corpus is short by
+              about <strong>{formatINR(shortBy)}</strong>. Any one of these closes the gap:
+            </p>
+            <ul className="text-amber-700 text-sm mt-2 space-y-1 list-disc list-inside">
+              <li>
+                Add about <strong>{formatINR(shortBy)}</strong> more to your retirement corpus (the
+                {" "}&quot;how much have you saved&quot; step).
+              </li>
+              {biggest && (
+                <li>
+                  Trim a big expense — e.g. reduce <strong>{biggest.head}</strong>{" "}
+                  ({formatINR(biggest.amount, { compact: true })}) by up to{" "}
+                  <strong>{formatINR(Math.min(shortBy, biggest.amount))}</strong>.
+                </li>
+              )}
+              <li>Lower your desired monthly income a little.</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
-      {/* In-page quick nav */}
-      <div className="mb-10 flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
-        {[
-          { id: "engine-roadmap", label: "🎯 3-Stage Roadmap" },
-          { id: "stage-1", label: "Stage 1 · Income" },
-          { id: "stage-2", label: "Stage 2 · Liabilities" },
-          { id: "stage-3", label: "Stage 3 · Growth" },
-          { id: "whatif", label: "What if?" },
-          { id: "summary", label: "Lifetime summary" },
-        ].map((s) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className="whitespace-nowrap px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-primary hover:text-white hover:border-primary text-sm font-medium text-slate-700 transition-colors"
-          >
-            {s.label}
-          </a>
-        ))}
-      </div>
-
-      {/* Top KPIs */}
+      {/* Top KPIs — all from the 3-stage engine */}
       <div className="grid md:grid-cols-4 gap-4 mb-10">
         <KPI
-          label="Monthly income (Year 1)"
-          value={formatINR(plan.summary.monthlyIncomeYear1, { compact: true })}
-          sublabel="After taxes"
+          label="Monthly income"
+          value={formatINR(managed)}
+          sublabel="Tax-free — split across both spouses"
+          tone="positive"
         />
         <KPI
-          label="Monthly income (Year 10)"
-          value={formatINR(plan.summary.monthlyIncomeYear10, { compact: true })}
-          sublabel={`= ${formatINR(plan.summary.inflationAdjustedYear10, { compact: true })} in today's ₹`}
+          label="Big expenses set aside"
+          value={formatINR(enginePlan.stage2.total, { compact: true })}
+          sublabel="Ring-fenced separately"
         />
         <KPI
-          label="Blended return"
-          value={formatPct(plan.blendedReturn)}
-          sublabel="Weighted across all buckets"
+          label="Growth corpus (SWP)"
+          value={formatINR(enginePlan.swpCorpus, { compact: true })}
+          sublabel="Invested + inflation top-ups"
         />
         <KPI
-          label="Corpus at end"
-          value={formatINR(plan.legacyAtEnd, { compact: true })}
-          sublabel={willLast ? "Legacy you can leave behind" : `Runs out in Year ${plan.shortfallYear}`}
-          tone={willLast ? "positive" : "warning"}
+          label="Corpus lasts to age"
+          value={`${enginePlan.swp.lastSurvivingAge}`}
+          sublabel={`Ending corpus ${formatINR(enginePlan.swp.corpusAtLastAge, { compact: true })}`}
+          tone="positive"
         />
       </div>
 
-      {/* WhatsApp banner — high-intent placement right after the KPIs */}
-      <div className="mb-6">
+      {/* WhatsApp banner */}
+      <div className="mb-10">
         <WealthManagerCTA
           variant="banner"
-          context={`I just saw my retirement plan${profile?.fullName ? ` (${profile.fullName})` : ""} and would like guidance on what to do next`}
+          context={`I just saw my retirement plan${fullName ? ` (${fullName})` : ""} and would like guidance on what to do next`}
           headline="Want a Wealth Manager to review this with you?"
           subline="Free 15-min WhatsApp call — we'll walk through your plan and answer your questions."
         />
       </div>
 
-      {/* Verdict */}
-      <div className={`rounded-2xl p-6 mb-10 flex items-start gap-4 ${willLast ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"}`}>
-        {willLast ? (
-          <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0" />
-        ) : (
-          <AlertTriangle className="w-7 h-7 text-amber-600 shrink-0" />
-        )}
-        <div>
-          <h3 className="font-bold text-lg text-slate-900">
-            {willLast
-              ? "✓ Your corpus is on track to last the full plan."
-              : `⚠ Your corpus may run out in Year ${plan.shortfallYear}.`}
-          </h3>
-          <p className="text-slate-700 text-sm mt-1">
-            {willLast
-              ? `You'll likely have ${formatINR(plan.legacyAtEnd, { compact: true })} left at the end of ${plan.projections.length} years — enough for a legacy or extra buffer.`
-              : `Consider reducing your monthly income target, working a few more years, or taking slightly more growth exposure. Try the what-if sliders below.`}
-          </p>
-        </div>
-      </div>
-
-      {/* THE CLINCHER — Retirement360 vs Local Agent comparison */}
-      {comparison && <ComparisonPanel comparison={comparison} planYears={plan.projections.length} />}
-
-      {/* ─────────────── ENGINE-DRIVEN 3-STAGE ROADMAP ─────────────── */}
-      {engineClient && enginePlan && (
-        <section id="engine-roadmap" className="mb-12 scroll-mt-20">
-          <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
-            <div>
-              <p className="text-sm font-semibold text-primary uppercase tracking-wide">The 3-Stage Roadmap</p>
-              <h2 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight">Your specialist plan, calculated to the rupee</h2>
-            </div>
-            <span className="text-xs text-slate-500 bg-slate-100 rounded-full px-3 py-1">
-              🔒 Calculated by Retirement360 engine — Excel-verified
-            </span>
-          </div>
-          <EngineRoadmap client={engineClient} plan={enginePlan} />
-
-          {/* SWP corpus survival chart */}
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-2">SWP corpus over time</h3>
-            <p className="text-slate-600 text-sm mb-4">
-              How your growth bucket evolves year by year, including monthly withdrawals starting at age {engineClient.swp.withdrawalStartAge}.
-            </p>
-            <div className="card">
-              <SWPCorpusChart plan={enginePlan} />
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <h3 className="text-lg font-bold mb-2">Monthly SWP withdrawal (with {formatPct(engineClient.swp.yearlyStepUp * 100)} step-up)</h3>
-            <div className="card">
-              <SWPMonthlyChart plan={enginePlan} />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Bucket allocation */}
-      <section id="buckets" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">Your bucket allocation</h2>
-        <p className="text-slate-600 mb-3">Total corpus of {formatINR(plan.totalCorpus, { compact: true })} split across three time horizons — by <strong>when</strong> you&apos;ll need the money.</p>
-        <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 mb-6 text-sm text-slate-700">
-          <p className="font-semibold text-slate-900 mb-1">How this works</p>
-          <p>
-            You draw income from the <strong>Safety</strong> bucket first (guaranteed, for the next few years) while the
-            {" "}<strong>Income</strong> bucket covers the medium term and the <strong>Growth</strong> bucket keeps compounding
-            to beat inflation. As each bucket runs down, the next one has already grown to refill it — so your money keeps
-            working and lasts the full 30+ years.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
-          <div className="card">
-            <BucketPieChart plan={plan} />
-          </div>
-          <div className="space-y-4">
-            {plan.buckets.map((b) => (
-              <BucketCard key={b.id} bucket={b} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Income projection */}
-      <section id="income" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">Year-by-year monthly income</h2>
-        <p className="text-slate-600 mb-6">Compared with what you&apos;ll need after inflation each year.</p>
-        <div className="card">
-          <MonthlyIncomeChart plan={plan} />
-        </div>
-      </section>
-
-      {/* Purchasing power */}
-      <section id="purchasing-power" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">Purchasing power over time</h2>
-        <p className="text-slate-600 mb-6">Nominal vs real (today&apos;s rupees) — shows the real impact of inflation.</p>
-        <div className="card">
-          <PurchasingPowerChart plan={plan} />
-        </div>
-      </section>
-
-      {/* Corpus depletion */}
-      <section id="depletion" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">Corpus depletion curve</h2>
-        <p className="text-slate-600 mb-6">How your corpus shrinks (or grows) each year.</p>
-        <div className="card">
-          <CorpusDepletionChart plan={plan} />
-        </div>
-      </section>
-
-      {/* What-if sliders */}
-      <section id="whatif" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">What if…?</h2>
-        <p className="text-slate-600 mb-6">Move the sliders to see how the plan responds.</p>
-        <div className="card space-y-6">
+      {/* ─────────────── 3-STAGE ROADMAP ─────────────── */}
+      <section id="engine-roadmap" className="mb-12 scroll-mt-20">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
           <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-medium">Inflation rate</span>
-              <span className="font-semibold text-primary">{(inflation ?? 6).toFixed(1)}%</span>
-            </div>
-            <input
-              type="range"
-              min={2}
-              max={12}
-              step={0.5}
-              value={inflation ?? 6}
-              onChange={(e) => setInflation(parseFloat(e.target.value))}
-              className="w-full accent-primary"
-            />
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
-              <span>2%</span><span>12%</span>
-            </div>
+            <p className="text-sm font-semibold text-primary uppercase tracking-wide">The 3-Stage Roadmap</p>
+            <h2 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight">Your specialist plan, calculated to the rupee</h2>
           </div>
-
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="font-medium">Desired monthly income</span>
-              <span className="font-semibold text-primary">{formatINR(income ?? plan.summary.monthlyIncomeYear1 * 1.1)}</span>
-            </div>
-            <input
-              type="range"
-              min={20_000}
-              max={5_00_000}
-              step={5_000}
-              value={income ?? Math.round(plan.summary.monthlyIncomeYear1)}
-              onChange={(e) => setIncome(parseFloat(e.target.value))}
-              className="w-full accent-primary"
-            />
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
-              <span>₹20k</span><span>₹5L</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              setInflation(null);
-              setIncome(null);
-            }}
-            className="btn-secondary inline-flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" /> Reset to my numbers
-          </button>
+          <span className="text-xs text-slate-500 bg-slate-100 rounded-full px-3 py-1">
+            🔒 Calculated by Retirement360 engine — Excel-verified
+          </span>
         </div>
-      </section>
+        <EngineRoadmap client={engineClient} plan={enginePlan} />
 
-      {/* Lifetime summary */}
-      <section id="summary" className="mb-12 scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-2">Lifetime summary</h2>
-        <div className="grid md:grid-cols-2 gap-4">
+        {/* SWP corpus survival chart */}
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-2">SWP corpus over time</h3>
+          <p className="text-slate-600 text-sm mb-4">
+            How your growth bucket evolves year by year, including monthly withdrawals starting at age {engineClient.swp.withdrawalStartAge}.
+          </p>
           <div className="card">
-            <p className="text-sm text-slate-500">Total lifetime income (after tax)</p>
-            <p className="text-3xl font-bold mt-1">{formatINR(plan.summary.totalLifetimeIncome, { compact: true })}</p>
-            <p className="text-sm text-slate-500 mt-2">Over {plan.projections.length} years</p>
+            <SWPCorpusChart plan={enginePlan} />
           </div>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="text-lg font-bold mb-2">Monthly SWP withdrawal (with {formatPct(engineClient.swp.yearlyStepUp * 100)} step-up)</h3>
           <div className="card">
-            <p className="text-sm text-slate-500">Estimated total tax paid</p>
-            <p className="text-3xl font-bold mt-1 text-amber-700">{formatINR(plan.summary.estimatedTaxPaid, { compact: true })}</p>
-            <p className="text-sm text-slate-500 mt-2">
-              <Link href="/tax" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
-                See how to reduce this → <Receipt className="w-3.5 h-3.5" />
-              </Link>
-            </p>
+            <SWPMonthlyChart plan={enginePlan} />
           </div>
         </div>
       </section>
@@ -502,109 +298,6 @@ function PlanPageInner() {
           </Link>
         </div>
       </section>
-    </div>
-  );
-}
-
-function ComparisonPanel({ comparison, planYears }: { comparison: ComparisonResult; planYears: number }) {
-  const { retireWell, localAgent, diff } = comparison;
-  const taxSaved = Math.max(0, diff.taxSaved);
-  const extraWealth = Math.max(0, diff.extraWealth);
-  const totalAdvantage = taxSaved + extraWealth;
-  const extraYears = diff.extraYears;
-
-  return (
-    <section className="mb-12 rounded-2xl bg-gradient-to-br from-primary-light via-white to-amber-50 border-2 border-primary p-6 md:p-8">
-      <div className="text-center mb-6">
-        <p className="text-sm font-semibold text-amber-700 uppercase tracking-wide">Plan With Specialists, Not Agents</p>
-        <h2 className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">
-          What happens if you go to a local agent instead?
-        </h2>
-        <p className="mt-2 text-slate-600 max-w-2xl mx-auto">
-          A typical local agent parks your corpus in just one basket, without understanding the power of diversification. Here&apos;s the difference over {planYears} years.
-        </p>
-      </div>
-
-      {/* Comparison table */}
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
-        {/* Local agent side */}
-        <div className="rounded-2xl bg-white border-2 border-red-200 overflow-hidden">
-          <div className="bg-red-50 px-5 py-3 border-b border-red-200">
-            <div className="flex items-center gap-2">
-              <X className="w-5 h-5 text-red-600" />
-              <h3 className="font-bold text-slate-900">Local Agent (FD-only, single name)</h3>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            <Row label="Total lifetime tax paid" value={formatINR(localAgent.tax, { compact: true })} tone="bad" />
-            <Row label="Corpus lasts" value={localAgent.lasts < planYears ? `Runs out in year ${localAgent.lasts}` : `Full ${planYears} years`} tone={localAgent.lasts < planYears ? "bad" : "neutral"} />
-            <Row label="Legacy at end" value={formatINR(localAgent.legacy, { compact: true })} tone={localAgent.legacy > 0 ? "neutral" : "bad"} />
-            <Row label="Total income received" value={formatINR(localAgent.netIncome, { compact: true })} tone="neutral" />
-          </div>
-        </div>
-
-        {/* Retirement360 side */}
-        <div className="rounded-2xl bg-white border-2 border-primary overflow-hidden shadow-md">
-          <div className="bg-primary-light px-5 py-3 border-b border-primary">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-              <h3 className="font-bold text-slate-900">Retirement360 Plan (3-stage, spouse-split, SWP)</h3>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            <Row label="Total lifetime tax paid" value={formatINR(retireWell.tax, { compact: true })} tone="good" />
-            <Row label="Corpus lasts" value={retireWell.lasts < planYears ? `Runs out in year ${retireWell.lasts}` : `Full ${planYears} years`} tone={retireWell.lasts < planYears ? "neutral" : "good"} />
-            <Row label="Legacy at end" value={formatINR(retireWell.legacy, { compact: true })} tone={retireWell.legacy > 0 ? "good" : "neutral"} />
-            <Row label="Total income received" value={formatINR(retireWell.netIncome, { compact: true })} tone="good" />
-          </div>
-        </div>
-      </div>
-
-      {/* The headline difference */}
-      <div className="grid sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center">
-          <Receipt className="w-6 h-6 text-emerald-700 mx-auto mb-1" />
-          <p className="text-xs text-emerald-700 font-semibold uppercase">Tax saved</p>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{formatINR(taxSaved, { compact: true })}</p>
-        </div>
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-center">
-          <TrendingUp className="w-6 h-6 text-amber-700 mx-auto mb-1" />
-          <p className="text-xs text-amber-700 font-semibold uppercase">Extra wealth at end</p>
-          <p className="text-2xl font-bold text-amber-700 mt-1">{formatINR(extraWealth, { compact: true })}</p>
-        </div>
-        <div className="rounded-2xl bg-primary text-white p-4 text-center">
-          <ShieldCheck className="w-6 h-6 mx-auto mb-1" />
-          <p className="text-xs font-semibold uppercase opacity-90">Total advantage</p>
-          <p className="text-2xl font-bold mt-1">{formatINR(totalAdvantage, { compact: true })}</p>
-        </div>
-      </div>
-
-      {extraYears > 0 && (
-        <p className="text-center text-slate-700 text-sm mt-4">
-          <strong>Plus:</strong> Your corpus lasts <strong className="text-primary">{extraYears} more year{extraYears === 1 ? "" : "s"}</strong> with the Retirement360 plan.
-        </p>
-      )}
-
-      <div className="mt-6 text-center">
-        <p className="text-slate-700 text-sm mb-3">
-          The difference comes from <strong>splitting income across both spouses</strong>, <strong>SWP instead of FD interest</strong>, and <strong>ring-fencing big expenses separately</strong>. A local agent rarely sets this up.
-        </p>
-        <WealthManagerCTA
-          variant="inline"
-          context={`I saw I could save ${formatINR(totalAdvantage, { compact: true })} compared to a local agent's plan`}
-          headline="Lock this plan in with a specialist"
-        />
-      </div>
-    </section>
-  );
-}
-
-function Row({ label, value, tone }: { label: string; value: string; tone: "good" | "bad" | "neutral" }) {
-  const valueClass = tone === "good" ? "text-emerald-700" : tone === "bad" ? "text-red-700" : "text-slate-900";
-  return (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-slate-600">{label}</span>
-      <span className={`font-bold text-base ${valueClass}`}>{value}</span>
     </div>
   );
 }
