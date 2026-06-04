@@ -9,7 +9,7 @@ import { EngineRoadmap } from "@/components/plan/EngineRoadmap";
 import { SWPCorpusChart, SWPMonthlyChart } from "@/components/plan/SWPProjectionChart";
 import { CongratsModal } from "@/components/plan/CongratsModal";
 import { WealthManagerCTA } from "@/components/WealthManagerCTA";
-import { ArrowRight, Receipt, AlertTriangle, Download } from "lucide-react";
+import { ArrowRight, Receipt, AlertTriangle } from "lucide-react";
 
 function PlanPageInner() {
   const params = useSearchParams();
@@ -128,12 +128,6 @@ function PlanPageInner() {
         <p className="mt-2 text-slate-600">
           Built on the 3-stage roadmap — a steady monthly income, your big expenses ring-fenced, and the rest grown for the future.
         </p>
-        <a
-          href={`/api/plan-pdf?id=${profileId}`}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-        >
-          <Download className="w-4 h-4 text-primary" /> Download my plan (PDF)
-        </a>
       </div>
 
       {/* Eligibility result */}
