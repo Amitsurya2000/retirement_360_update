@@ -185,12 +185,9 @@ function buildSteps(s: Strings): Step[] {
       min: 1000,
       presets: [
         { label: "₹50,000", value: 50_000 },
-        { label: "₹75,000", value: 75_000 },
         { label: "₹1 L", value: 1_00_000 },
         { label: "₹1.5 L", value: 1_50_000 },
         { label: "₹2 L", value: 2_00_000 },
-        { label: "₹2.5 L", value: 2_50_000 },
-        { label: "₹3 L", value: 3_00_000 },
       ],
       apply: (_d, v) => {
         const n = Number(v);

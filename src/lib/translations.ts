@@ -149,7 +149,7 @@ const en: Strings = {
   npsQuestion: "Do you have NPS (National Pension System)? Roughly how much is in it?\n(40% goes into a mandatory annuity; the rest stays in your growth bucket. Tap None if you don't have NPS.)",
   answerNoEPS: "No EPS",
   answerNoNPS: "No NPS",
-  fundsQuestion: "Now the most important question 💰\n\nLet's build the full picture of where your retirement money is coming from. Tell me roughly how much you have in each of these. This is the basis for your ENTIRE plan, so take a moment.\n\n(Tap a preset chip, or \"Enter a different amount\" to type exactly. Leave it at zero if you don't have that source.)",
+  fundsQuestion: "💰 Your retirement savings\n\nHow much do you have in each of these? Just a rough amount is fine.\n\nTap a chip or type the amount. Leave it at ₹0 if you don't have that one.",
   fundsTotalLabel: "Your total corpus",
   fundPF: "PF / EPF / CPF / GPF", fundPFHint: "Provident Fund — your employer-side retirement savings",
   fundGovScheme: "Other govt scheme (CSSS, VRS payout, etc.)", fundGovSchemeHint: "Any other lump sum from a govt or PSU scheme",
