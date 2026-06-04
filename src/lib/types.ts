@@ -39,8 +39,11 @@ export const profileSchema = z.object({
   hasHealthInsurance: z.boolean(),
   healthCover: z.number().min(0),
 
-  // Step 3
-  desiredMonthlyIncome: z.number().min(1000),
+  // Step 3 — tolerate strings / null / NaN (default to a sensible value rather than 500-erroring)
+  desiredMonthlyIncome: z.preprocess((v) => {
+    const n = typeof v === "string" ? Number(v.replace(/[^\d.]/g, "")) : Number(v);
+    return Number.isFinite(n) && n >= 1000 ? n : 80000;
+  }, z.number().min(1000)),
   expenseHousing: z.number().min(0),
   expenseFood: z.number().min(0),
   expenseMedical: z.number().min(0),

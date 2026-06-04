@@ -188,8 +188,11 @@ function buildSteps(s: Strings): Step[] {
         { label: "₹75,000", value: 75_000 },
         { label: "₹1 L", value: 1_00_000 },
       ],
-      apply: (_d, v) => ({ desiredMonthlyIncome: Number(v) }),
-      answerLabel: (v) => `${formatINR(Number(v))} / mo`,
+      apply: (_d, v) => {
+        const n = Number(v);
+        return { desiredMonthlyIncome: Number.isFinite(n) && n >= 1000 ? n : _d.desiredMonthlyIncome };
+      },
+      answerLabel: (v) => `${formatINR(Number(v) || 0)} / mo`,
     },
     {
       id: "risk",
