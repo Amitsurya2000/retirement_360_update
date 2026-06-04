@@ -39,8 +39,12 @@ export function parseINR(input: string): number {
   if (cleaned.endsWith("cr")) {
     return parseFloat(cleaned.replace("cr", "")) * 1_00_00_000;
   }
-  if (cleaned.endsWith("l") || cleaned.endsWith("lakh") || cleaned.endsWith("lakhs")) {
-    return parseFloat(cleaned.replace(/lakhs?|l$/g, "")) * 1_00_000;
+  if (
+    cleaned.endsWith("lac") || cleaned.endsWith("lacs") ||
+    cleaned.endsWith("lakh") || cleaned.endsWith("lakhs") ||
+    cleaned.endsWith("l")
+  ) {
+    return parseFloat(cleaned.replace(/lacs?|lakhs?|l$/g, "")) * 1_00_000;
   }
   if (cleaned.endsWith("k")) {
     return parseFloat(cleaned.replace("k", "")) * 1_000;
