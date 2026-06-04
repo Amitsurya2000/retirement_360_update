@@ -21,6 +21,8 @@ function PlanPageInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [congratsDismissed, setCongratsDismissed] = useState(false);
+  const [incomeOverride, setIncomeOverride] = useState<number | null>(null);
+  const [corpusOverride, setCorpusOverride] = useState<number | null>(null);
 
   // If no id in URL, try localStorage
   useEffect(() => {
@@ -34,7 +36,10 @@ function PlanPageInner() {
   useEffect(() => {
     if (!profileId) return;
     setLoading(true);
-    fetch(`/api/plan?id=${profileId}`)
+    const q = new URLSearchParams({ id: profileId });
+    if (incomeOverride != null) q.set("income", String(incomeOverride));
+    if (corpusOverride != null) q.set("corpus", String(corpusOverride));
+    fetch(`/api/plan?${q.toString()}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
@@ -46,7 +51,7 @@ function PlanPageInner() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [profileId]);
+  }, [profileId, incomeOverride, corpusOverride]);
 
   // Generate + store the plan PDF (for records + the download button).
   useEffect(() => {
@@ -213,6 +218,48 @@ function PlanPageInner() {
           sublabel={`Ending corpus ${formatINR(enginePlan.swp.corpusAtLastAge, { compact: true })}`}
           tone="positive"
         />
+      </div>
+
+      {/* Try different numbers — live recalculation through the 3-stage engine */}
+      <div className="card mb-10">
+        <h3 className="text-lg font-bold mb-1">Try different numbers</h3>
+        <p className="text-slate-600 text-sm mb-4">Move a slider — your whole plan recalculates instantly.</p>
+        <div className="space-y-6">
+          <div>
+            <div className="flex justify-between mb-2">
+              <span className="font-medium">Desired monthly income</span>
+              <span className="font-semibold text-primary">{formatINR(incomeOverride ?? wanted)}</span>
+            </div>
+            <input
+              type="range" min={20000} max={500000} step={5000}
+              value={Math.min(500000, incomeOverride ?? wanted)}
+              onChange={(e) => setIncomeOverride(parseInt(e.target.value, 10))}
+              className="w-full accent-primary"
+            />
+            <div className="flex justify-between text-xs text-slate-500 mt-1"><span>₹20k</span><span>₹5L</span></div>
+          </div>
+          <div>
+            <div className="flex justify-between mb-2">
+              <span className="font-medium">Retirement corpus</span>
+              <span className="font-semibold text-primary">{formatINR(corpusOverride ?? engineTotal, { compact: true })}</span>
+            </div>
+            <input
+              type="range" min={1000000} max={200000000} step={500000}
+              value={Math.min(200000000, corpusOverride ?? engineTotal)}
+              onChange={(e) => setCorpusOverride(parseInt(e.target.value, 10))}
+              className="w-full accent-primary"
+            />
+            <div className="flex justify-between text-xs text-slate-500 mt-1"><span>₹10L</span><span>₹20Cr</span></div>
+          </div>
+          {(incomeOverride != null || corpusOverride != null) && (
+            <button
+              onClick={() => { setIncomeOverride(null); setCorpusOverride(null); }}
+              className="btn-secondary"
+            >
+              ↺ Reset to my saved numbers
+            </button>
+          )}
+        </div>
       </div>
 
       {/* WhatsApp banner */}
