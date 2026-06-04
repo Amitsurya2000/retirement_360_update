@@ -182,11 +182,15 @@ function buildSteps(s: Strings): Step[] {
       id: "desired",
       type: "money",
       question: () => s.desiredIncomeQuestion,
+      min: 1000,
       presets: [
-        { label: "₹30,000", value: 30_000 },
         { label: "₹50,000", value: 50_000 },
         { label: "₹75,000", value: 75_000 },
         { label: "₹1 L", value: 1_00_000 },
+        { label: "₹1.5 L", value: 1_50_000 },
+        { label: "₹2 L", value: 2_00_000 },
+        { label: "₹2.5 L", value: 2_50_000 },
+        { label: "₹3 L", value: 3_00_000 },
       ],
       apply: (_d, v) => {
         const n = Number(v);
@@ -601,6 +605,8 @@ function ChoiceInput({ step, onAnswer }: { step: Step; onAnswer: (v: AnswerValue
 function MoneyInput({ step, onAnswer, strings }: { step: Step; onAnswer: (v: AnswerValue) => void; strings: Strings }) {
   const [custom, setCustom] = useState(false);
   const [amount, setAmount] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const minVal = step.min ?? 0;
 
   if (custom) {
     return (
@@ -608,6 +614,10 @@ function MoneyInput({ step, onAnswer, strings }: { step: Step; onAnswer: (v: Ans
         onSubmit={(e) => {
           e.preventDefault();
           const n = parseINR(amount);
+          if (minVal > 0 && n < minVal) {
+            setErr(`Please enter at least ${formatINR(minVal)} per month. Tip: for ₹2.5 lakh, type "250000" or "2.5L".`);
+            return;
+          }
           if (n > 0 || amount.trim() === "0") onAnswer(n);
         }}
         className="space-y-3"
@@ -619,16 +629,17 @@ function MoneyInput({ step, onAnswer, strings }: { step: Step; onAnswer: (v: Ans
             type="text"
             inputMode="numeric"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => { setAmount(e.target.value); setErr(null); }}
             placeholder={strings.enterAmountPlaceholder}
             className="w-full rounded-2xl border-2 border-slate-300 pl-10 pr-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
           {parseINR(amount) > 0 && (
-            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-              {formatINR(parseINR(amount), { compact: true })}
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-base font-bold text-primary">
+              = {formatINR(parseINR(amount))}
             </span>
           )}
         </div>
+        {err && <p className="text-sm text-red-600 font-medium">{err}</p>}
         <p className="text-sm text-slate-500">{strings.amountTip}</p>
         <div className="flex gap-3">
           <button type="submit" className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold rounded-2xl px-6 py-4 text-lg transition-colors">
