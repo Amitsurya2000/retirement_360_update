@@ -40,6 +40,9 @@ interface Step {
   placeholder?: string;
   initial?: (d: ProfileData) => number;
   prefill?: (d: ProfileData) => string;
+  digitsOnly?: boolean;
+  maxLength?: number;
+  validate?: (v: string) => string | null; // returns an error message, or null if valid
   skippable?: boolean;
   showIf?: (d: ProfileData) => boolean;
   apply: (d: ProfileData, value: AnswerValue) => Partial<ProfileData>;
@@ -64,10 +67,13 @@ function buildSteps(s: Strings): Step[] {
     {
       id: "phone",
       type: "text",
-      placeholder: "e.g. 98765 43210",
+      digitsOnly: true,
+      maxLength: 10,
+      validate: (v) => (/^\d{10}$/.test(v) ? null : "Please enter a valid 10-digit mobile number."),
+      placeholder: "10-digit mobile number",
       question: (d) => `${firstName(d.fullName) ? `Thanks, ${firstName(d.fullName)}! ` : ""}What's the best phone number to reach you on?`,
       apply: (_d, v) => ({ phone: String(v).trim() }),
-      answerLabel: (v) => (String(v).trim() ? String(v).trim() : "—"),
+      answerLabel: (v) => String(v).trim(),
     },
     {
       id: "company",
@@ -498,10 +504,24 @@ const BIG_BTN =
 
 function TextInput({ step, data, onAnswer, strings }: { step: Step; data: ProfileData; onAnswer: (v: AnswerValue) => void; strings: Strings }) {
   const [value, setValue] = useState(step.prefill ? step.prefill(data) : "");
+  const [touched, setTouched] = useState(false);
+  const error = step.validate ? step.validate(value) : null;
+
+  const handleChange = (raw: string) => {
+    let v = raw;
+    if (step.digitsOnly) v = v.replace(/\D/g, "");
+    if (step.maxLength) v = v.slice(0, step.maxLength);
+    setValue(v);
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        if (error) {
+          setTouched(true);
+          return;
+        }
         onAnswer(value);
       }}
       className="space-y-3"
@@ -509,13 +529,22 @@ function TextInput({ step, data, onAnswer, strings }: { step: Step; data: Profil
       <input
         autoFocus
         type="text"
+        inputMode={step.digitsOnly ? "numeric" : "text"}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
+        onBlur={() => setTouched(true)}
         placeholder={step.placeholder}
-        className="w-full rounded-2xl border-2 border-slate-300 px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        className={`w-full rounded-2xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+          touched && error ? "border-red-400" : "border-slate-300"
+        }`}
       />
+      {touched && error && <p className="text-sm text-red-600 px-1">{error}</p>}
       <div className="flex gap-3">
-        <button type="submit" className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold rounded-2xl px-6 py-4 text-lg transition-colors">
+        <button
+          type="submit"
+          disabled={!!error}
+          className="flex-1 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-2xl px-6 py-4 text-lg transition-colors"
+        >
           {strings.continueBtn}
         </button>
         {step.skippable && (

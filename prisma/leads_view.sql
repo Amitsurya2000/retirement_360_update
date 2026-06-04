@@ -9,6 +9,7 @@ SELECT
   "maritalStatus"        AS "Marital",
   "corpus"               AS "Corpus",
   "desiredMonthlyIncome" AS "WantsPerMonth",
-  "id"
+  "id",
+  "planPdfUrl"           AS "PDF_Download_Link"
 FROM "UserProfile"
 ORDER BY "createdAt" DESC;

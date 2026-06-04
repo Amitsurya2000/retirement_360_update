@@ -3,6 +3,7 @@
 // is never exposed in the browser bundle.
 import { prisma } from "@/lib/db";
 import { formatINR } from "@/lib/format";
+import { Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -56,12 +57,13 @@ export default async function AdminLeadsPage({
               <th className="py-3 px-3 text-right">Age</th>
               <th className="py-3 px-3 text-right">Corpus</th>
               <th className="py-3 px-3 text-right">Wants/mo</th>
+              <th className="py-3 px-3 text-center">Plan PDF</th>
             </tr>
           </thead>
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-500">No signups yet.</td>
+                <td colSpan={9} className="py-8 text-center text-slate-500">No signups yet.</td>
               </tr>
             ) : (
               leads.map((l) => (
@@ -76,6 +78,14 @@ export default async function AdminLeadsPage({
                   <td className="py-3 px-3 text-right">{l.age}</td>
                   <td className="py-3 px-3 text-right whitespace-nowrap">{formatINR(l.corpus, { compact: true })}</td>
                   <td className="py-3 px-3 text-right whitespace-nowrap">{formatINR(l.desiredMonthlyIncome, { compact: true })}</td>
+                  <td className="py-3 px-3 text-center whitespace-nowrap">
+                    <a
+                      href={`/api/admin/plan-pdf?id=${l.id}&key=${encodeURIComponent(key)}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold px-3 py-1.5 hover:opacity-90 transition-opacity"
+                    >
+                      <Download className="w-3.5 h-3.5" /> PDF
+                    </a>
+                  </td>
                 </tr>
               ))
             )}

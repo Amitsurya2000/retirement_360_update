@@ -69,8 +69,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Don't ship the stored PDF bytes (or the admin-keyed link) back to the browser.
+  const safeProfile: Record<string, unknown> = { ...profile };
+  delete safeProfile.planPdf;
+  delete safeProfile.planPdfUrl;
+
   return NextResponse.json({
-    ...profile,
+    ...safeProfile,
     bucketListGoals: profile.bucketListGoals ? JSON.parse(profile.bucketListGoals) : [],
     healthConditions: profile.healthConditions ? JSON.parse(profile.healthConditions) : [],
     hobbies: profile.hobbies ? JSON.parse(profile.hobbies) : [],

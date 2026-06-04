@@ -73,4 +73,9 @@ model UserProfile {
 
   // Generated plan (cached)
   generatedPlan      String?
+
+  // Plan PDF — the generated PDF file + a one-click download link (last columns).
+  planPdf            Bytes?
+  planPdfName        String?
+  planPdfUrl         String?
 }

@@ -16,7 +16,7 @@
  * When we later expand the chat to ask for EPS / NPS / SCSS specifics,
  * we just replace this mapper — the engine itself stays unchanged.
  */
-import { UserProfile } from "@prisma/client";
+import type { UserProfile } from "@prisma/client";
 import {
   Client,
   Fund,

@@ -9,8 +9,9 @@ import { formatINR, formatPct } from "@/lib/format";
 import { BucketCard } from "@/components/plan/BucketCard";
 import { BucketPieChart, MonthlyIncomeChart, CorpusDepletionChart, PurchasingPowerChart } from "@/components/plan/PlanCharts";
 import { EngineRoadmap } from "@/components/plan/EngineRoadmap";
+import { CongratsModal } from "@/components/plan/CongratsModal";
 import { SWPCorpusChart, SWPMonthlyChart } from "@/components/plan/SWPProjectionChart";
-import { ArrowRight, Receipt, AlertTriangle, CheckCircle2, RefreshCw, X, TrendingUp, ShieldCheck } from "lucide-react";
+import { ArrowRight, Receipt, AlertTriangle, CheckCircle2, RefreshCw, X, TrendingUp, ShieldCheck, Download } from "lucide-react";
 import { WealthManagerCTA } from "@/components/WealthManagerCTA";
 
 function PlanPageInner() {
@@ -28,6 +29,9 @@ function PlanPageInner() {
   // What-if overrides
   const [inflation, setInflation] = useState<number | null>(null);
   const [income, setIncome] = useState<number | null>(null);
+
+  // Celebration popup shown once when the plan is fully funded.
+  const [congratsDismissed, setCongratsDismissed] = useState(false);
 
   // If no id in URL, try localStorage
   useEffect(() => {
@@ -60,6 +64,12 @@ function PlanPageInner() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [profileId, inflation, income]);
+
+  // Generate + store the plan PDF once (for your records + the download button).
+  useEffect(() => {
+    if (!profileId) return;
+    fetch(`/api/plan-pdf?id=${profileId}`).catch(() => {});
+  }, [profileId]);
 
   if (!profileId) {
     return (
@@ -98,9 +108,27 @@ function PlanPageInner() {
   }
 
   const willLast = plan.shortfallYear === null;
+  // Eligibility follows the 3-stage roadmap engine (the advisor method): the
+  // monthly income floor is met AND the corpus covers Stage 1 + Stage 2.
+  const engineRemaining = enginePlan?.remainingCorpus ?? 0;
+  const engineTotal = enginePlan?.totalCorpus ?? 0;
+  const isEligible =
+    enginePlan != null &&
+    enginePlan.stage1.status !== "UNDERFUNDED" &&
+    engineRemaining >= 0;
+  // "Comfortable" = the growth surplus is a healthy share (>=20%) of the corpus.
+  const isComfortable = isEligible && engineRemaining >= 0.2 * engineTotal;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
+      {isComfortable && !congratsDismissed && (
+        <CongratsModal
+          name={profile?.fullName?.trim()}
+          subtitle={`Your corpus comfortably funds your income, your big expenses are covered, and ${formatINR(engineRemaining, { compact: true })} is left growing for your future. You're all set!`}
+          onClose={() => setCongratsDismissed(true)}
+        />
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Your Personalized Plan</p>
@@ -110,7 +138,86 @@ function PlanPageInner() {
         <p className="mt-2 text-slate-600">
           Built around the bucket strategy — designed to give you steady income for {plan.projections.length}+ years after retirement.
         </p>
+        <a
+          href={`/api/plan-pdf?id=${profileId}`}
+          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          <Download className="w-4 h-4 text-primary" /> Download my plan (PDF)
+        </a>
       </div>
+
+      {/* Eligibility result */}
+      {(() => {
+        const fullName = profile?.fullName?.trim();
+        const shortBy = Math.max(0, -engineRemaining);
+        const surplus = Math.max(0, engineRemaining);
+        const wanted = engineClient?.requiredMonthlyIncome ?? 0;
+        const liabs = engineClient?.liabilities ?? [];
+        const biggest = liabs.length ? liabs.reduce((a, b) => (b.amount > a.amount ? b : a)) : null;
+
+        if (isComfortable) {
+          return (
+            <div className="mb-8 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 flex items-start gap-3">
+              <span className="text-3xl leading-none">🎉</span>
+              <div>
+                <h2 className="text-xl font-bold text-emerald-800">
+                  Congratulations{fullName ? `, ${fullName}` : ""}! You&apos;re eligible 🎊
+                </h2>
+                <p className="text-emerald-700 text-sm mt-1">
+                  Your corpus <strong>comfortably</strong> funds your <strong>{formatINR(wanted)}/month</strong> income,
+                  your big expenses are ring-fenced, and you still have <strong>{formatINR(surplus, { compact: true })}</strong>{" "}
+                  growing for the future. You&apos;re all set!
+                </p>
+              </div>
+            </div>
+          );
+        }
+        if (isEligible) {
+          return (
+            <div className="mb-8 rounded-2xl border-2 border-sky-300 bg-sky-50 p-5 flex items-start gap-3">
+              <span className="text-3xl leading-none">✅</span>
+              <div>
+                <h2 className="text-xl font-bold text-sky-800">
+                  You&apos;re eligible{fullName ? `, ${fullName}` : ""} — just comfortably enough
+                </h2>
+                <p className="text-sky-700 text-sm mt-1">
+                  Your <strong>{formatINR(wanted)}/month</strong> income is fully funded and your big expenses are
+                  covered. Your growth surplus is modest (<strong>{formatINR(surplus, { compact: true })}</strong>) —
+                  adding a little more corpus would give you a stronger cushion for later years.
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="mb-8 rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 flex items-start gap-3">
+            <AlertTriangle className="w-7 h-7 text-amber-600 shrink-0" />
+            <div>
+              <h2 className="text-xl font-bold text-amber-800">
+                Almost there{fullName ? `, ${fullName}` : ""} — a small gap to close
+              </h2>
+              <p className="text-amber-700 text-sm mt-1">
+                To fund <strong>{formatINR(wanted)}/month</strong> plus your big expenses, your corpus is short by
+                about <strong>{formatINR(shortBy)}</strong>. Any one of these closes the gap:
+              </p>
+              <ul className="text-amber-700 text-sm mt-2 space-y-1 list-disc list-inside">
+                <li>
+                  Add about <strong>{formatINR(shortBy)}</strong> more to your retirement corpus (the
+                  {" "}&quot;how much have you saved&quot; step).
+                </li>
+                {biggest && (
+                  <li>
+                    Trim a big expense — e.g. reduce <strong>{biggest.head}</strong>{" "}
+                    ({formatINR(biggest.amount, { compact: true })}) by up to{" "}
+                    <strong>{formatINR(Math.min(shortBy, biggest.amount))}</strong>.
+                  </li>
+                )}
+                <li>Lower your desired monthly income a little.</li>
+              </ul>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* In-page quick nav */}
       <div className="mb-10 flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
