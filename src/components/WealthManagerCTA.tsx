@@ -117,7 +117,7 @@ export function WealthManagerCTA({
             className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl px-5 py-2.5 transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
-            Chat on WhatsApp
+            Book my free WhatsApp call →
           </a>
         </div>
       </div>

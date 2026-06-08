@@ -70,7 +70,7 @@ function buildIncomeItems(profile: UserProfile): { items: IncomeItem[]; usedPrin
 
   // 2. Rental → spouse (income-splitting principle)
   if (profile.rentalMonthly > 0) {
-    items.push({ owner: "spouse", instrument: "RENT", fixedMonthly: profile.rentalMonthly });
+    items.push({ owner: "spouse", instrument: "RENT", fixedMonthly: profile.rentalMonthly, joint: true });
     coveredMonthly += profile.rentalMonthly;
   }
 
@@ -92,7 +92,7 @@ function buildIncomeItems(profile: UserProfile): { items: IncomeItem[]; usedPrin
     const needPrincipal = Math.min(15_00_000, (need * 12) / 0.074);
     if (needPrincipal > 0) {
       const monthly = (needPrincipal * 0.074) / 12;
-      items.push({ owner: "spouse", instrument: "POMIS", principal: Math.round(needPrincipal), rate: 0.074 });
+      items.push({ owner: "spouse", instrument: "POMIS", principal: Math.round(needPrincipal), rate: 0.074, joint: true });
       coveredMonthly += monthly;
       usedPrincipal += needPrincipal;
     }
@@ -115,7 +115,7 @@ function buildIncomeItems(profile: UserProfile): { items: IncomeItem[]; usedPrin
     const need = target - coveredMonthly;
     // Assume 8.5% blended return — matches IDCW default in the engine
     const swpPrincipal = (need * 12) / 0.085;
-    items.push({ owner: "spouse", instrument: "IDCW", principal: Math.round(swpPrincipal), rate: 0.085 });
+    items.push({ owner: "spouse", instrument: "IDCW", principal: Math.round(swpPrincipal), rate: 0.085, joint: true });
     usedPrincipal += swpPrincipal;
   }
 

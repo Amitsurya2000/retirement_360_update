@@ -36,6 +36,36 @@ export function SWPCorpusChart({ plan }: { plan: BuiltPlan }) {
   );
 }
 
+// Excel-style year-by-year SWP table (Age · Monthly withdrawal · Year-end corpus).
+export function SWPProjectionTable({ plan }: { plan: BuiltPlan }) {
+  return (
+    <div className="max-h-[28rem] overflow-y-auto rounded-xl border border-slate-200">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 sticky top-0">
+          <tr className="text-slate-500">
+            <th className="py-2.5 px-4 font-semibold text-left">Age</th>
+            <th className="py-2.5 px-4 font-semibold text-right">Monthly Withdrawal</th>
+            <th className="py-2.5 px-4 font-semibold text-right">Year-End Corpus</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plan.swp.rows.map((r) => (
+            <tr key={r.age} className="border-t border-slate-100 even:bg-slate-50/50">
+              <td className="py-2 px-4 font-medium text-slate-900">{r.age}</td>
+              <td className="py-2 px-4 text-right text-slate-700">
+                {r.monthly > 0 ? formatINR(Math.round(r.monthly)) : "—"}
+              </td>
+              <td className="py-2 px-4 text-right text-slate-700">
+                {formatINR(Math.max(0, Math.round(r.yearEndCorpus)), { compact: true })}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function SWPMonthlyChart({ plan }: { plan: BuiltPlan }) {
   const data = plan.swp.rows
     .filter((r) => r.monthly > 0)

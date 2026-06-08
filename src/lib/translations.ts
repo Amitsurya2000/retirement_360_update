@@ -143,7 +143,7 @@ const en: Strings = {
   riskQuestion: "How do you feel about your money? Pick what sounds most like you 👇",
   healthInsuranceQuestion: "Do you have health insurance?",
   healthCoverQuestion: "Roughly how much is your health cover (sum insured)?",
-  liabilitiesQuestion: "Last one — and this matters a LOT 🎯\n\nAre there any big expenses coming up in retirement? Daughter's wedding, grandkids' education, a foreign trip, home renovation, a medical buffer?\n\nWe'll ring-fence these separately so they NEVER touch your monthly income. Tap each one that applies, pick the amount and when you'll need it. (Skip what doesn't apply.)",
+  liabilitiesQuestion: "Last one 🎯\n\nAny BIG expenses coming later? A wedding 💐, studies 🎓, a trip ✈️, home repair 🏠, or health needs 🏥.\n\n💡 We keep this money SEPARATE — it NEVER touches your monthly income.\n\n👉 Tap what you need. Skip the rest.",
 
   epsQuestion: "Do you have an EPS pension? Roughly how much per month?\n(EPS pension comes from the EPF system — usually ₹3,000–₹10,000/mo for most retirees.)",
   npsQuestion: "Do you have NPS (National Pension System)? Roughly how much is in it?\n(40% goes into a mandatory annuity; the rest stays in your growth bucket. Tap None if you don't have NPS.)",

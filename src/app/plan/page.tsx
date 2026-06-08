@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { BuiltPlan as EngineBuiltPlan, Client as EngineClient } from "@/lib/retirement-engine";
 import { formatINR, formatPct } from "@/lib/format";
 import { EngineRoadmap } from "@/components/plan/EngineRoadmap";
-import { SWPCorpusChart, SWPMonthlyChart } from "@/components/plan/SWPProjectionChart";
+import { SWPProjectionTable } from "@/components/plan/SWPProjectionChart";
 import { CongratsModal } from "@/components/plan/CongratsModal";
 import { WealthManagerCTA } from "@/components/WealthManagerCTA";
 import { ArrowRight, Receipt, AlertTriangle } from "lucide-react";
@@ -279,22 +279,14 @@ function PlanPageInner() {
         </div>
         <EngineRoadmap client={engineClient} plan={enginePlan} />
 
-        {/* SWP corpus survival chart */}
+        {/* SWP year-by-year projection table (Excel / SWP Masterstroke style) */}
         <div className="mt-8">
-          <h3 className="text-lg font-bold mb-2">SWP corpus over time</h3>
+          <h3 className="text-lg font-bold mb-2">SWP year-by-year projection</h3>
           <p className="text-slate-600 text-sm mb-4">
-            How your growth bucket evolves year by year, including monthly withdrawals starting at age {engineClient.swp.withdrawalStartAge}.
+            Your growth bucket year by year — the monthly withdrawal (with {formatPct(engineClient.swp.yearlyStepUp * 100)} step-up)
+            and the corpus left at each age, starting at age {engineClient.swp.withdrawalStartAge}.
           </p>
-          <div className="card">
-            <SWPCorpusChart plan={enginePlan} />
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <h3 className="text-lg font-bold mb-2">Monthly SWP withdrawal (with {formatPct(engineClient.swp.yearlyStepUp * 100)} step-up)</h3>
-          <div className="card">
-            <SWPMonthlyChart plan={enginePlan} />
-          </div>
+          <SWPProjectionTable plan={enginePlan} />
         </div>
       </section>
 

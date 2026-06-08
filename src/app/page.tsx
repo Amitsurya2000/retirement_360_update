@@ -180,7 +180,7 @@ export default function Home() {
                 <span className="text-3xl">🎯</span>
                 <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">STAGE 2</span>
               </div>
-              <h3 className="text-xl font-bold mb-2">Big Expenses, Ring-Fenced</h3>
+              <h3 className="text-xl font-bold mb-2">Big Future Expenses</h3>
               <p className="text-slate-700 text-sm leading-relaxed">
                 Education, wedding, world tour, renovation — each parked in the right instrument by horizon.
                 Your monthly income stays protected.

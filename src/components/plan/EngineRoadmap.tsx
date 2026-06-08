@@ -14,6 +14,12 @@ const OWNER_LABEL = {
   spouse: "Spouse",
 } as const;
 
+// Joint-holdable instruments show both names (first holder = the one taxed).
+function ownerLabel(it: { owner: "self" | "spouse"; joint?: boolean }): string {
+  if (it.joint) return it.owner === "self" ? "Self + Spouse" : "Spouse + Self";
+  return OWNER_LABEL[it.owner];
+}
+
 const STATUS_TONE = {
   BALANCED: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800", icon: CheckCircle2, label: "Balanced ✓" },
   UNDERFUNDED: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800", icon: AlertTriangle, label: "Underfunded" },
@@ -69,7 +75,7 @@ export function EngineRoadmap({ client, plan }: Props) {
                       <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
                         it.owner === "self" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"
                       }`}>
-                        {OWNER_LABEL[it.owner]}
+                        {ownerLabel(it)}
                       </span>
                     </td>
                   </tr>
@@ -82,6 +88,18 @@ export function EngineRoadmap({ client, plan }: Props) {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* Total corpus deployed for the Stage-1 monthly income (both spouses combined) */}
+        <div className="mt-4 rounded-xl bg-slate-900 text-white p-4 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase text-slate-300">Total corpus used for monthly income</p>
+            <p className="text-2xl font-bold mt-0.5">{formatINR(plan.stage1.stage1Corpus, { compact: true })}</p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-xs font-semibold uppercase text-slate-300">Generates</p>
+            <p className="text-2xl font-bold mt-0.5">{formatINR(plan.stage1.managed)}/mo</p>
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-3 mt-4">
@@ -116,7 +134,7 @@ export function EngineRoadmap({ client, plan }: Props) {
           </div>
           <div>
             <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Stage 2</p>
-            <h2 className="text-2xl font-bold text-slate-900">Big Expenses, Ring-Fenced</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Big Future Expenses</h2>
           </div>
         </div>
         <p className="text-slate-600 mb-4">
@@ -181,15 +199,17 @@ export function EngineRoadmap({ client, plan }: Props) {
           </div>
         </div>
         <p className="text-slate-600 mb-4">
-          Remaining <strong>{formatINR(plan.swpCorpus, { compact: true })}</strong> spread across a diversified mix —
-          corporate &amp; govt bonds, gold &amp; silver, REITs, arbitrage, and Indian &amp; foreign equity — kept 100% liquid.
-          SWP gives you inflation top-ups later, in a tax-efficient way.
+          Remaining <strong>{formatINR(plan.swpCorpus, { compact: true })}</strong> is invested as a diversified
+          <strong> mutual-fund portfolio</strong> — debt &amp; govt-bond funds, gold &amp; silver funds, REITs,
+          arbitrage funds, and Indian &amp; foreign equity funds — kept 100% liquid. SWP (Systematic Withdrawal Plan)
+          gives you inflation top-ups later, in a tax-efficient way.
         </p>
 
         <div className="grid sm:grid-cols-3 gap-3 mb-4">
           {plan.allocation.map((a) => (
             <div key={a.bucket} className="card border border-amber-200">
               <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">{a.bucket.replace(/_/g, " ")}</p>
+              <p className="text-[11px] text-amber-600 font-medium">Mutual fund</p>
               <p className="text-2xl font-bold mt-1 text-slate-900">{formatINR(a.amount, { compact: true })}</p>
               <p className="text-xs text-slate-500">{formatPct(a.pct * 100, 0)} of growth bucket</p>
               <p className="text-xs text-slate-600 mt-2">

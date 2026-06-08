@@ -383,7 +383,7 @@ export function buildEngineContext(c: EngineClient, p: BuiltPlan): string {
   }
   L.push("");
 
-  L.push(`## STAGE 2 — Big Expenses Ring-Fenced (engine)`);
+  L.push(`## STAGE 2 — Big Future Expenses (engine)`);
   if (p.stage2.rows.length === 0) {
     L.push("(No liabilities entered by the user yet — ask them what's coming up: wedding / education / travel / renovation / medical buffer.)");
   } else {

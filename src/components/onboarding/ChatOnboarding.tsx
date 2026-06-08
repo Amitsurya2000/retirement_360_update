@@ -681,6 +681,7 @@ function LiabilitiesForm({ onAnswer, strings }: { onAnswer: (v: AnswerValue) => 
     { id: "renovation", icon: "🏠", label: strings.liabilityRenovation },
     { id: "medical", icon: "🏥", label: strings.liabilityMedical },
     { id: "vehicle", icon: "🚗", label: strings.liabilityVehicle },
+    { id: "other", icon: "💸", label: "Other" },
   ];
   const AMOUNT_PRESETS = [
     { label: "₹2 L", value: 2_00_000 },
@@ -693,13 +694,13 @@ function LiabilitiesForm({ onAnswer, strings }: { onAnswer: (v: AnswerValue) => 
   const YEAR_PRESETS = [
     { label: strings.yearThisYear, value: 0 },
     { label: strings.yearIn2, value: 2 },
+    { label: "In 3 years", value: 3 },
     { label: strings.yearIn5, value: 5 },
     { label: strings.yearIn10, value: 10 },
-    { label: strings.yearIn15, value: 15 },
   ];
 
   const [rows, setRows] = useState<Record<string, { enabled: boolean; amount: number; year: number }>>(
-    Object.fromEntries(CATEGORIES.map((c) => [c.id, { enabled: false, amount: 0, year: 5 }]))
+    Object.fromEntries(CATEGORIES.map((c) => [c.id, { enabled: false, amount: 0, year: 0 }]))
   );
 
   const toggle = (id: string) => setRows((prev) => ({ ...prev, [id]: { ...prev[id], enabled: !prev[id].enabled } }));

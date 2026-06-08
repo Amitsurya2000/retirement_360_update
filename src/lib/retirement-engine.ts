@@ -71,6 +71,10 @@ export interface IncomeItem {
   principal?: number;
   rate?: number;          // decimal; if undefined, looked up via DEFAULT_INSTRUMENT_RATES
   fixedMonthly?: number;  // EPS / pension / rent — hardcoded payout
+  // Joint-holdable instruments (POMIS, mutual funds, FDs, rent). When true the
+  // "Whose Name" column shows "Self + Spouse" / "Spouse + Self" (owner = first holder).
+  // Single-name-only instruments (EPS, NPS annuity, SCSS) leave this false.
+  joint?: boolean;
 }
 
 export interface Liability {
