@@ -195,7 +195,6 @@ export function EngineRoadmap({ client, plan }: Props) {
           </div>
           <div>
             <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Stage 3</p>
-            <h2 className="text-2xl font-bold text-slate-900">Wealth Multiplication (SWP)</h2>
           </div>
         </div>
         <p className="text-slate-600 mb-4">
