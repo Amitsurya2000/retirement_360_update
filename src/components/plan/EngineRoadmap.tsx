@@ -197,27 +197,6 @@ export function EngineRoadmap({ client, plan }: Props) {
             <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Stage 3</p>
           </div>
         </div>
-        <p className="text-slate-600 mb-4">
-          Remaining <strong>{formatINR(plan.swpCorpus, { compact: true })}</strong> is invested as a diversified
-          <strong> mutual-fund portfolio</strong> — debt &amp; govt-bond funds, gold &amp; silver funds, REITs,
-          arbitrage funds, and Indian &amp; foreign equity funds — kept 100% liquid. SWP (Systematic Withdrawal Plan)
-          gives you inflation top-ups later, in a tax-efficient way.
-        </p>
-
-        <div className="grid sm:grid-cols-3 gap-3 mb-4">
-          {plan.allocation.map((a) => (
-            <div key={a.bucket} className="card border border-amber-200">
-              <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">{a.bucket.replace(/_/g, " ")}</p>
-              <p className="text-[11px] text-amber-600 font-medium">Mutual fund</p>
-              <p className="text-2xl font-bold mt-1 text-slate-900">{formatINR(a.amount, { compact: true })}</p>
-              <p className="text-xs text-slate-500">{formatPct(a.pct * 100, 0)} of growth bucket</p>
-              <p className="text-xs text-slate-600 mt-2">
-                STP {a.stpMonths} months · {a.horizonYears}-year horizon
-              </p>
-            </div>
-          ))}
-        </div>
-
         <div className="card bg-gradient-to-br from-amber-50 to-white border border-amber-200">
           <h3 className="font-bold text-slate-900 mb-3">SWP corpus survival</h3>
           <div className="grid sm:grid-cols-3 gap-4">
